@@ -39,6 +39,7 @@ gui-framework subclass threadmon
    : type ( addr len -- )   richie type ;
    : page ( -- )   richie page ;
    : emit ( char -- )   richie emit ;
+   : cr ( -- )   richie cr ;
 end-class
 
 threadmon builds tmon
@@ -49,7 +50,7 @@ threadmon builds tmon
 : tmon-type     tmon type ;
 : tmon-emit     tmon emit ;
 : tmon-page     tmon page ;
-: tmon-cr       s\" \n" tmon-type ;
+: tmon-cr       tmon cr   ;
 
 : tmon-creator ( -- )
    forks>  tmon construct  dispatcher drop ;

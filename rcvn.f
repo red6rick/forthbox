@@ -38,15 +38,10 @@ hwnd pad getwindowrect drop pad 2@ swap 0 monitorfrompoint 0= [if]
 
 ' (ddmmmyyyy) is (date)
 
-version zcount -trailing pad place
-s" sfx/Stratolaunch " version zplace
-@date (date) version zappend
-s"  (based on " version zappend
-pad count version zappend
-s" )" version zappend
-
-s" sfx/Stratolaunch" title zplace
-
+title" sf/rcvn" 
+title zcount type   cr
+version zcount type cr
+cr
 \ ----------------------------------------------------------------------
 
 ONLY FORTH DEFINITIONS  GILD

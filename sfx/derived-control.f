@@ -196,8 +196,40 @@ derived-control subclass myeditbox
         WS_THICKFRAME or
         ES_RIGHT or ;
 end-class    
+ 
+derived-control subclass myrichbox
+   : mywindow_classname ( -- z )
+      z" Msftedit.dll" loadlibrary drop   z" RICHEDIT50W" ;
+   : mywindow_style ( -- n )
+      0 WS_TABSTOP OR WS_CHILD OR WS_VISIBLE OR WS_BORDER OR
+        WS_VSCROLL or WS_HSCROLL or ES_MULTILINE or ES_AUTOVSCROLL or
+        ES_AUTOHSCROLL or ;
+   : font ( -- hfont )   lucida-console-12 CreateFont ;
+   : sized-as-chars ( cols rows  -- )   
+      >r charw  * dup to xsize  SM_CXVSCROLL GetSystemMetrics +  charw 2/ +
+      r> charh  * dup to ysize  SM_CXHSCROLL GetSystemMetrics +  charh 2/ +
+      sized ;
+   : post-make ( -- )   xsize ysize sized-as-chars ;
 
-myeditbox subclass mynumberbox
+   : send ( msg wparam lparam -- res )   >r mhwnd -rot r> sendmessage drop ;
+   : goto-end ( -- )   EM_SETSEL -1 -1 send ;
+   : replace ( zstr -- )   EM_REPLACESEL 0 rot send ;
+   : append ( zstr -- )   goto-end replace ;
+   : select-all ( -- )   EM_SETSEL 0 -1 send ;
+   : page ( -- )   select-all  0 append ;
+   : emit ( char -- )   sp@ append drop ;
+   : cr ( -- )   z\" \n" append ;
+   : type ( addr len -- )   r-buf
+      begin
+         2dup 250 min r@ zplace  r@ append
+         250 /string  dup 1 <
+      until  2drop  r> drop ;
+
+
+        
+end-class    
+
+derived-control subclass mynumberbox
    : mywindow_classname
       z" Msftedit.dll" loadlibrary drop
       z" RICHEDIT50W" ;
