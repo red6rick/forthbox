@@ -23,20 +23,21 @@ gui-framework subclass threadmon
       WS_SYSMENU  WS_BORDER OR  WS_POPUP OR  WS_CAPTION OR
       WS_MINIMIZEBOX OR WS_THICKFRAME OR ;
    : MyWindow_Shape ( -- x y cx cy )   100 100 600 400 ;
-   
+
    myrichbox builds richie
    defer: text-size ( -- x y )   80 24 ;
    : place-children ( x y -- X Y )
       2dup richie placed ;
    : create-children ( -- )
-      mhwnd text-size 0 richie make ;   
+      mhwnd text-size 0 richie make ;
    : init ( -- )
-      create-children 
+      create-children
       5 5 place-children
       2dup to ysize  to xsize   resize-window ;
    WM_SETFOCUS message: richie mhwnd SetFocus drop ;
 
    : type ( addr len -- )   richie type ;
+   : writeln ( addr len -- )   richie writeln ;
    : page ( -- )   richie page ;
    : emit ( char -- )   richie emit ;
    : cr ( -- )   richie cr ;
@@ -47,25 +48,17 @@ threadmon builds tmon
 \ ----------------------------------------------------------------------
 \ define a personality to use the threadmon
 
-: tmon-type     tmon type ;
-: tmon-emit     tmon emit ;
-: tmon-page     tmon page ;
-: tmon-cr       tmon cr   ;
-
-: tmon-creator ( -- )
-   forks>  tmon construct  dispatcher drop ;
-
-: tmon-invoke
-   phandle IsWindow not if
-      tmon-creator to drop  tmon mhwnd personality-handle !
-   then  phandle SW_SHOW ShowWindow drop ;
-
+: tmon-type     tmon type    ;
+: tmon-emit     tmon emit    ;
+: tmon-page     tmon page    ;
+: tmon-cr       tmon cr      ;
+: tmon-writeln  tmon writeln ;
 create tmon-personality
         16 ,        \ datasize                    \
         19 ,        \ maxvector                   \
          0 ,        \ personality-handle          \
          0 ,        \ previous                    \
-   ' tmon-invoke ,  \ invoke    ( -- )            \ 
+   ' noop ,         \ invoke    ( -- )            \
    ' noop ,         \ revoke    ( -- )            \
    ' noop ,         \ /input    ( -- )            \ do nothing
    ' tmon-emit ,    \ emit      ( char -- )       \ methods of class
@@ -73,7 +66,7 @@ create tmon-personality
    ' tmon-type ,    \ ?type     ( addr len -- )   \
    ' tmon-cr ,      \ cr        ( -- )            \
    ' tmon-page ,    \ page      ( -- )            \
-   ' drop ,         \ attribute ( n -- )          \ 
+   ' drop ,         \ attribute ( n -- )          \
    ' bl ,           \ key       ( -- char )       \ reasonable defaults
    ' true ,         \ key?      ( -- flag )       \
    ' bl ,           \ ekey      ( -- echar )      \
@@ -85,9 +78,20 @@ create tmon-personality
    ' 2dup ,         \ get-size  ( -- x y )        \
    ' = ,            \ accept    ( addr u1 -- u2 ) \ returns zero!
 
-: use-tmon ( -- )   'personality @ ?exit  
-   tmon-personality 'personality !  invoke ;
+: fork-tmon ( -- handle )   forks>   tmon construct
+   tmon mhwnd  tmon-personality 2 cells + !
+   dispatcher drop ;
 
+single tmon-thread-handle
+
+: start-tmon ( -- )   fork-tmon to tmon-thread-handle ;
+
+: use-tmon ( -- )
+   tmon mhwnd IsWindow not if  start-tmon  then
+   tmon mhwnd SW_SHOW ShowWindow drop
+   up@ operator @ <> if  ( do not revector operator ever)
+      tmon-personality 'personality !
+   then ;
 \ ----------------------------------------------------------------------
 \ an example of using the thread monitor
 
@@ -97,6 +101,13 @@ create tmon-personality
 : tmon-test
    forks>   use-tmon     ['] testing catch ;
 
+
+: sol? ( -- flag )
+   zz EM_GETSEL 0 0 sendmessage $ffff and 
+   zz EM_LINEFROMCHAR third 0 sendmessage 
+   zz EM_LINEINDEX rot 0 sendmessage = ;
+   
+   
 
 
 

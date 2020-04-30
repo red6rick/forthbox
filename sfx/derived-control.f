@@ -6,7 +6,7 @@ window class/object.
 
 Various derived controls are defined here, added as needed.
 
-(C) 2020 Rick VanNorman  -- rick@digital-sawdust.com  
+(C) 2020 Rick VanNorman  -- rick@digital-sawdust.com
 ====================================================================== }
 
 class reflected-message
@@ -96,13 +96,13 @@ control placement of surface objects
       pre-make
       >r  sized  attach   r> title
       addr  hparent WM_GETBASEADDR 0 0 SendMessage  -  to id
-      mhwnd getdc to hdc  
-      font ?dup if  dup to hfont  set-font  then  measure-font   
+      mhwnd getdc to hdc
+      font ?dup if  dup to hfont  set-font  then  measure-font
       post-make ;
 
    : reflect ( -- )
       hwnd msg wparam lparam reflected capture
-      hparent WM_COMMAND  msg >h<  id or  mhwnd SendMessage ;      
+      hparent WM_COMMAND  msg >h<  id or  mhwnd SendMessage ;
 
    : get-ztext ( addr len -- len )
       1- mhwnd pad rot GetWindowText  pad over fourth zplace  nip ;
@@ -136,8 +136,8 @@ derived-control subclass mybutton
    : mywindow_classname z" BUTTON" ;
 
     WM_LBUTTONDOWN    message:  defproc  reflect ;
-    WM_RBUTTONDOWN    message:  defproc  reflect ;   
- 
+    WM_RBUTTONDOWN    message:  defproc  reflect ;
+
 end-class
 
 derived-control subclass mystatic
@@ -175,12 +175,12 @@ derived-control subclass mylistbox
         LBS_NOINTEGRALHEIGHT OR
         WS_VSCROLL OR
         WS_HSCROLL OR ;
-   : TYPE ( addr len -- )   R-BUF R@ ZPLACE  
+   : TYPE ( addr len -- )   R-BUF R@ ZPLACE
       mHWND LB_ADDSTRING 0 R> :: SendMessage DROP
       mHWND LB_GETCOUNT 0 0 :: SendMessage 500 > IF
          mHWND LB_DELETESTRING 0 0 :: SendMessage DROP
       THEN
-      mHWND LB_GETCOUNT 0 0 :: SendMessage 1- 
+      mHWND LB_GETCOUNT 0 0 :: SendMessage 1-
       mHWND LB_SETCURSEL ROT 0 :: SendMessage DROP ;
 end-class
 
@@ -195,27 +195,34 @@ derived-control subclass myeditbox
         WS_BORDER OR
         WS_THICKFRAME or
         ES_RIGHT or ;
-end-class    
- 
+end-class
+
 derived-control subclass myrichbox
    : mywindow_classname ( -- z )
       z" Msftedit.dll" loadlibrary drop   z" RICHEDIT50W" ;
    : mywindow_style ( -- n )
-      0 WS_TABSTOP OR WS_CHILD OR WS_VISIBLE OR WS_BORDER OR
+      0 WS_TABSTOP OR WS_CHILD OR WS_VISIBLE OR
         WS_VSCROLL or WS_HSCROLL or ES_MULTILINE or ES_AUTOVSCROLL or
         ES_AUTOHSCROLL or ;
    : font ( -- hfont )   lucida-console-12 CreateFont ;
-   : sized-as-chars ( cols rows  -- )   
+   : sized-as-chars ( cols rows  -- )
       >r charw  * dup to xsize  SM_CXVSCROLL GetSystemMetrics +  charw 2/ +
       r> charh  * dup to ysize  SM_CXHSCROLL GetSystemMetrics +  charh 2/ +
       sized ;
    : post-make ( -- )   xsize ysize sized-as-chars ;
 
-   : send ( msg wparam lparam -- res )   >r mhwnd -rot r> sendmessage drop ;
-   : goto-end ( -- )   EM_SETSEL -1 -1 send ;
-   : replace ( zstr -- )   EM_REPLACESEL 0 rot send ;
+   : send ( msg wparam lparam -- res )   >r mhwnd -rot r> sendmessage ;
+   : tell ( msg wparam lparam -- res )   send drop ;
+
+   : sol? ( -- flag )
+      EM_GETSEL 0 0 send $ffff and
+      EM_LINEFROMCHAR third 0 send
+      EM_LINEINDEX rot 0 send = ;
+
+   : goto-end ( -- )   EM_SETSEL -1 -1 tell ;
+   : replace ( zstr -- )   EM_REPLACESEL 0 rot tell ;
    : append ( zstr -- )   goto-end replace ;
-   : select-all ( -- )   EM_SETSEL 0 -1 send ;
+   : select-all ( -- )   EM_SETSEL 0 -1 tell ;
    : page ( -- )   select-all  0 append ;
    : emit ( char -- )   sp@ append drop ;
    : cr ( -- )   z\" \n" append ;
@@ -224,10 +231,9 @@ derived-control subclass myrichbox
          2dup 250 min r@ zplace  r@ append
          250 /string  dup 1 <
       until  2drop  r> drop ;
+   : writeln ( addr len -- )   sol? not if cr then type cr ;
 
-
-        
-end-class    
+end-class
 
 derived-control subclass mynumberbox
    : mywindow_classname
@@ -251,7 +257,7 @@ derived-control subclass mynumberbox
       pad dup 32 get-ztext >float ?exit  0.0e0 ;
    : set-float ( -- ) f( rval -- )
       (f.3) set-text ;
-end-class    
+end-class
 
 \ ======================================================================
 
@@ -264,4 +270,4 @@ derived-control subclass mygroupbox
       y - to ysize  x - to xsize
       mhwnd  HWND_BOTTOM x y xsize ysize  SWP_NOMOVE SetWindowPos drop
       r> border + r>  border + ;
-end-class    
+end-class
