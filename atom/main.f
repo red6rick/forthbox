@@ -13,6 +13,16 @@ notes:
 6. close and done.
 ---------------------------------------------------------------------- }
 
+variable buffer-list
+single curbuf
+single curwin
+: disassociate-buffer ( n -- ) drop ;
+: associate-buffer ( a a -- )   2drop ;
+
+include buffer
+
+\\
+
 : atom ( -- )
    atom-window construct ;
 

@@ -36,12 +36,6 @@ class atom-buffer
       
 end-class
 
-variable buffer-list
-single curbuf
-single curwin
-: disassociate-buffer ( n -- ) drop ;
-: associate-buffer ( a a -- )   2drop ;
-
 : dot-buffers ( -- )
    buffer-list begin
       @ ?dup while >r
@@ -83,40 +77,11 @@ single curwin
 : count-buffers ( -- n )
    0  buffer-list begin  @ ?dup while swap 1+ swap  repeat ;
 
+
+\\
+
 s" this"   new-buffer value x1
 s" that"   new-buffer value x2
 s" one"    new-buffer value x3
 s" two"    new-buffer value x4
 s" three"  new-buffer value x5
-
-
-\\
-
-: find-buffer ( addr len flag -- addr )   locals| f len name |
-   buffer-list begin
-      @ ?dup while >r
-      name len  using atom-buffer  r@ same? if
-         drop r> exit  then
-      
-      
-
-\ 
-\ 
-\ : buffer-exists? ( addr len -- buffer true | 0 false )
-\    buffer-list begin
-\       @ ?dup while >r
-\       using atom-buffer r@ fname count  2dup compare 
-\       
-      
-       
-
-: find-buffer ( addr len flag -- buffer )
-  search for filename in buffer list
-  if found, return buffer
-  if flag is true
-     make a new buffer
-     if fail, return 0
-     init buffer
-     insert buffer into list
-     
-
