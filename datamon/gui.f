@@ -37,7 +37,7 @@ gui-framework subclass datamon
       hdc hfont SelectObject drop   hdc measure-font
       0 to measured  0 to xmax  0 to ymax
       100 100  2dup  to ysize  to xsize   resize-window
-      mhwnd 99 20 0 settimer drop
+      mhwnd 99 100 0 settimer drop
       ;
 
    : measure-text ( len x y -- )
@@ -56,12 +56,9 @@ gui-framework subclass datamon
       repeat 2drop ;
    
    : redraw ( -- )
-      hr fmt  3  1 print-column   
-      tc fmt  3  4 print-column   
-      tr fmt  3 14 print-column  
-      ac fmt 30  1 print-column  
-      ar fmt 60  1 print-column 
-      wc fmt 30 20 print-column 
+      test1   3  1 print-column
+      test2  30  1 print-column
+      test3  22  8 print-column
       measured not if
          xmax 3 + ymax 2+ char>pixel resize-window
          1 to measured
