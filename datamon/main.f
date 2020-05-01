@@ -10,7 +10,7 @@ rick vannorman  01may2020  rick@neverslow.com
 
 requires rnd
 include example-output
-include gui
+include datamon
 
 datamon builds gui
 
