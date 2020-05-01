@@ -13,9 +13,12 @@ notes:
 6. close and done.
 ---------------------------------------------------------------------- }
 
+variable window-list
 variable buffer-list
+
 single curbuf
 single curwin
+
 : disassociate-buffer ( n -- ) drop ;
 : associate-buffer ( a a -- )   2drop ;
 

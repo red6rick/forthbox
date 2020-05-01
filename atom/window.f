@@ -18,7 +18,6 @@ simple start with a pre-allocated max number? nah...
 
 ---------------------------------------------------------------------- }
 
-
 variable window-list
 
 class atom-window
@@ -35,13 +34,25 @@ class atom-window
    single col
    single update
    256 buffer: name
-   : construct window-list @ link !  link window-list ! ;
-end-class
 
+   : init ( -- )
+      0 to next  0 to bufp  NOMARK to mark  0 to top
+      0 to rows  FALSE to update
+      1 +to wincnt   <% %" W" wincnt 3 %.0 %> name place ;
+
+end-class
 
 : dot ( -- )
    window-list begin   @ ?dup while  dup . repeat ;
 
-: new-window ( -- addr )   atom-window new ;
-
+: new-window ( -- wp )
+   atom-window new >r
+   r@ 0= z" failed to allocate new window" ?throw
+   using atom-window  r@ init
+   window-list @  r@ !  r@ window-list ! ;
+   
+: associate-buffer ( bp wp -- )
+   using atom-window  2dup to bufp  
+   using atom-buffer  1 +to cnt ;
+   
 

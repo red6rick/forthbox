@@ -25,6 +25,25 @@ class atom-buffer
    256 buffer: fname  \ filename
    256 buffer: bname  \ buffer name
 
+   : init ( -- )
+      NOMARK to mark  0 to point  0 to cpoint  0 to page  0 to epage
+      0 to reframe  0 to size  0 to psize  0 to flags  0 to cnt
+      0 to buf  0 to ebuf  0 to gap  0 to egap  0 fname !  0 bname !  0 to link ;
+
+   : dot ( -- )
+      cr ." fname " fname count type
+      cr ." bname " bname count type
+      cr ." flags " flags . reframe .
+      cr ." point " point h. cpoint h. mark h.
+      cr ." buf   " 'buf h. 'ebuf h.
+      cr ." gap   " 'gap h. 'egap h.
+      cr ." page  " page h. epage h.
+      cr ." rc    " row . col .
+      cr ." size  " size . psize . ;
+      
+
+
+
    : set-fname ( addr len -- )   fname place ;
    : set-bname ( addr len -- )   bname place ;
 
@@ -33,7 +52,16 @@ class atom-buffer
 
    : same? ( addr len -- flag )
       2dup =fname if  =bname  else  2drop -1  then ;
-      
+
+\ ======================================================================
+
+   : ptr ( offset -- buffer-addr )
+      dup 0< if  drop  'buf exit  then
+      'buf +  dup 'gap < ?exit   'egap 'gap - + ;
+   
+
+
+
 end-class
 
 : dot-buffers ( -- )
@@ -54,7 +82,7 @@ end-class
 : new-buffer ( name len -- addr )
    2dup find-buffer ?dup if  nip nip exit  then
    atom-buffer new >r
-   using atom-buffer  r@ set-bname
+   using atom-buffer  r@ init  using atom-buffer  r@ set-bname
    buffer-list @ r@ !  r@ buffer-list !
    r> ;
 
