@@ -28,8 +28,6 @@ gui-framework subclass datamon
    : measure-font ( hdc -- )   tm addr GetTextMetrics drop
       tm height @ to charh    tm avecharwidth @ to charw ;
 
-   : char>pixel ( x y -- x y )   >r charw * r> charh * ;
-   
    defer: font ( -- [font descriptor] )   lucida-console-10 ;
 
    : init ( -- )
@@ -43,6 +41,8 @@ gui-framework subclass datamon
    : measure-text ( len x y -- )
       ymax max  to ymax  +  xmax max to xmax ;
 
+   : char>pixel ( x y -- x y )   >r charw * r> charh * ;
+   
    : dot-text ( addr len x y -- )
       measured not if  3dup measure-text  then 
       2swap 2>r  2>r   hdc  2r> char>pixel 2r> TextOut drop ;

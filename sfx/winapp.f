@@ -23,6 +23,8 @@ to the genericwindow and genericdialog classes
 
 GUICOMMON REOPEN
 
+   SINGLE DC                    \ this window's device context
+
    \ make sure the zbuf is at least 100 bytes long!
 
    DEFER: APPKEY ( z zbuf -- zbuf )
@@ -57,6 +59,8 @@ GUICOMMON REOPEN
    : RESTORE-POSITION ( -- )
       HERE 2 CELLS Z" xy" READ-APPKEY
       HERE 2@ SWAP SET-POSITION  FORCE-ONSCREEN ;
+
+   : set-title ( z -- )   mHWND swap SetWindowText drop ;
 
 END-CLASS
 
@@ -362,7 +366,6 @@ GENERICWINDOW SUBCLASS gui-wrapper
    STATUSBAR BUILDS STAT        \ unused today, allowed for
    RECT BUILDS CLIENT           \ interior size of display
 
-   SINGLE DC                    \ this window's device context
    SINGLE HMENU                 \ handle of the window's menu
 
    SINGLE LEFT                  \ pixel counts of margins of display
@@ -502,9 +505,7 @@ control over post-wm_initdialog behavior???
    defer: MyAppName   0 ;
 
    : retitle ( -- )
-      MyAppName if
-         mHWND MyAppName SetWindowText drop
-      then ;
+      MyAppName ?dup if  set-title  then ;
 
    DEFER: RESTORE-DIALOG ;
    DEFER: SAVE-DIALOG ;

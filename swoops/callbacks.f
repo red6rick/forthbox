@@ -46,6 +46,9 @@ gui-framework subclass simplemon
    WM_TIMER message:  dot-text ;
 end-class
 
+
+
+
 class point
    single x
    single y
