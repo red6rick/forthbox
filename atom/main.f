@@ -13,6 +13,7 @@ notes:
 6. close and done.
 ---------------------------------------------------------------------- }
 
+0 equ NOMARK
 variable window-list
 variable buffer-list
 
@@ -23,6 +24,8 @@ single curwin
 : associate-buffer ( a a -- )   2drop ;
 
 include buffer
+include test
+include buffer-management
 
 \\
 
