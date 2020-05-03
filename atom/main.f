@@ -27,7 +27,16 @@ include buffer
 include test
 include buffer-management
 
+s" one" new-buffer value z1
+
+
+
+
 \\
+
+make a buffer, buf ebug gap egap point  = 0
+make a window
+grow a gap
 
 : atom ( -- )
    atom-window construct ;

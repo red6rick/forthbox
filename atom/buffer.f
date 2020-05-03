@@ -15,10 +15,10 @@ class atom-buffer
    single cnt         \ count of windows referencing this buffer
    single size        \ current size of text being edited (not including gap)
    single psize       \ previous size
-   single 'buf        \ start of buffer
-   single 'ebuf       \ end of buffer
-   single 'gap        \ start of gap
-   single 'egap       \ end of gap
+   single buf         \ start of buffer
+   single ebuf        \ end of buffer
+   single gap         \ start of gap
+   single egap        \ end of gap
    single row         \ cursor row
    single col         \ cursor col
    single flags       \ buffer flags
@@ -28,10 +28,9 @@ class atom-buffer
    : init ( -- )
       NOMARK to mark  0 to point  0 to cpoint  0 to page  0 to epage
       0 to reframe  0 to size  0 to psize  0 to flags  0 to cnt
-      0 to 'buf  0 to 'ebuf
-      0 to 'gap  0 to 'egap
+      0 to buf  0 to ebuf
+      0 to gap  0 to egap
       0 fname !  0 bname !  0 link ! ;
-
 
    : set-fname ( addr len -- )   fname place ;
    : set-bname ( addr len -- )   bname place ;
@@ -43,10 +42,6 @@ class atom-buffer
       2dup =fname if  =bname  else  2drop -1  then ;
 
 \ ======================================================================
-
-   : ptr ( offset -- buffer-addr )
-      dup 0< if  drop  'buf exit  then
-      'buf +  dup 'gap < ?exit   'egap 'gap - + ;
    
 
 end-class

@@ -35,9 +35,10 @@ atom-buffer reopen
          %" fname " fname count %type %cr
          %" next  " neighbor  %type %cr
          %" flags " flags 8 %h.0 %bl reframe 8 %.r  %bl               %cr 
-         %" point " point 8 %h.0 %bl cpoint  8 %h.0 %bl mark  8 %h.0  %cr 
-         %" buf   " 'buf  8 %h.0 %bl 'ebuf   8 %h.0 %bl               %cr 
-         %" gap   " 'gap  8 %h.0 %bl 'egap   8 %h.0 %bl               %cr 
+         %" buf   " buf   8 %h.0 %bl ebuf    8 %h.0 %bl  ebuf buf -  8 %.r       %cr 
+         %" gap   " gap   8 %h.0 %bl egap    8 %h.0 %bl  egap gap -  8 %.r       %cr 
+         %" ogap  " gap buf - 8 %.r  %bl egap buf - 8 %.r %cr
+         %" point " point 8 %.r %bl cpoint  8 %.r %bl mark  8 %.r  %cr 
          %" page  " page  8 %h.0 %bl epage   8 %h.0 %bl               %cr 
          %" rc    " row   8 %.r  %bl col     8 %.r  %bl               %cr 
          %" size  " size  8 %.r  %bl psize   8 %.r  %bl               %cr  
@@ -51,8 +52,8 @@ atom-buffer reopen
       
    : init ( -- )   init bug ;
 
-
 end-class
+
 
 
 
