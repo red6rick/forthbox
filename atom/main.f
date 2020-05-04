@@ -13,7 +13,13 @@ notes:
 6. close and done.
 ---------------------------------------------------------------------- }
 
+include ncurses-stubs
+
 0 equ NOMARK
+1 equ B_MODIFIED
+: file-msg ( n zname ztype -- )
+   operator's cr zcount type space zcount type space . ;
+   
 variable window-list
 variable buffer-list
 
@@ -24,12 +30,32 @@ single curwin
 : associate-buffer ( a a -- )   2drop ;
 
 include buffer
+include gap
 include test
 include buffer-management
 
-s" one" new-buffer value z1
+\ ----------------------------------------------------------------------
 
-
+\ s" one" new-buffer value z1
+\ 
+\ : test
+\    z1 (o atom-buffer= bp )
+\    s" main.f" bp insert-file ;
+oop +order
+: foop ( addr -- )
+   [objects atom-buffer names foo objects]
+   foo addr  atom-buffer swap [member] construct broadcast 
+   foo init s" this" foo set-bname 
+   buffer-list @ foo link !  foo link buffer-list !
+   foo addr ;
+previous
+atom-buffer builds foo
+foo addr foop
+2048 foo grow-gap
+s" clip_temp.txt" slurp   value len value addr   
+addr foo buf 1200 cmove   
+1200 +to foo gap
+500 foo move-gap drop
 
 
 \\
