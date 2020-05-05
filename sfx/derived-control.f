@@ -29,6 +29,7 @@ derivedwindow subclass derived-control
 
    single id            \ control id for forwarded messages
    single hdc
+   single hfont
    single charw
    single charh
    single high
@@ -86,13 +87,11 @@ control placement of surface objects
 
    defer: font ( -- hfont )   lucida-console-10 CreateFont ;
 
-   single hfont
-
    : set-font ( hfont -- )   to hfont
       mhwnd WM_SETFONT hfont 0 SendMessage drop
       hdc hfont SelectObject drop ;
 
-   : make ( hwnd id xsize ysize zname -- )
+   : make ( hwnd xsize ysize zname -- )
       pre-make
       >r  sized  attach   r> title
       addr  hparent WM_GETBASEADDR 0 0 SendMessage  -  to id
@@ -106,10 +105,14 @@ control placement of surface objects
 
    : get-ztext ( addr len -- len )
       1- mhwnd pad rot GetWindowText  pad over fourth zplace  nip ;
-   : set-ztext ( z -- )
-      mhwnd swap SetWindowText drop ;
+
    : set-text ( addr len -- )
-      r-buf  r@ zplace  r> set-ztext ;
+      r-buf  r@ zplace  r> title ;
+
+   : clicked? ( x y -- x y bool )
+      2dup
+      y dup ysize + rot within >r
+      x dup xsize + rot within r> and ;
 
 end-class
 
