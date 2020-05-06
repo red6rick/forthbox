@@ -211,6 +211,7 @@ gui-framework subclass toolwin-class
 
    : init ( -- )   init-widgets
      5 5 place-children  2dup to ysize  to xsize  resize-window
+     button1 press
      ;
 
    id_button1 command:   pane stop ;
