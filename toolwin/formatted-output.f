@@ -28,18 +28,18 @@ MUST be unique. any string will do.
    [char] | parse add-string   s\" \n" add-string ;
 
 { ----------------------------------------------------------------------
-build a display list; the template is carried on the stack
+build a format table; the template is kept on the stack
 for the duration of the build and is dropped at the end. the list
 is terminated by a zero (null). DISPLAY-ITEM is the list builder
 
-N       is the index into the "%xx" strings in the template
+PATTERN matches a unique string in the template
 ITEM    is any forth executable function
 FORMAT  is any forth function to act on the result of the ITEM
         and produce a string (addr len) to be inserted into
         the output string
 
-         display-item  <pattern>  <item>   <formatter>
-In use:  display-item  %1         @time    (time)
+    display-item  <pattern>  <item>   <formatter>
+ex: display-item  %1         @time    (time)
 
 SEARCH-ERASE searches for the substring (if it exists), erases it,
 and returns its offset in the original string and a flag
@@ -81,6 +81,7 @@ puts the result back at PAD in the current context
       2dup eol-scanner swap >r  /string
       2swap  1+ swap r> max  swap  2swap
    repeat 2drop ;
+
 \ ----------------------------------------------------------------------
 1 [if]
 
