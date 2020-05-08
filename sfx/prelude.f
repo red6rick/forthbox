@@ -20,11 +20,11 @@ EQU ( n <name> -- )   alias of constant
 
 UMAXINT UMININT MAXINT MININT
    max and min of signed and unsigned 32 bit integers
-   
+
 CONTAINS ( haystack len needle len -- haystack len flag )
    simple string matcher. original string is returned. search for
    a needle in a haystack
- 
+
 CREATE-UPDATE ( -- )
    just like create, but forces the name into uppercase
 
@@ -72,7 +72,7 @@ potentially easier debug targets...
   : !BELOW ( n addr -- )
    DUP ORIGIN HERE 1+ WITHIN NOT -22 ?THROW
    4 - DUP @ 1018 1020 WITHIN NOT -22 ?THROW  ! ;
-[then]  
+[then]
 
 : DEFER: HEADER POSTPONE (DEFER) HERE >R ['] CRASH , :NONAME R> ! ;
 
@@ -88,7 +88,7 @@ $ffffffff constant umaxint
 $00000000 constant uminint
 
 $7fffffff constant maxint
-$80000000 constant minint 
+$80000000 constant minint
 
 { ----------------------------------------------------------------------
 managing stand-alone applications
@@ -159,7 +159,7 @@ around MAP-FILE
 : SPEW ( data-addr len filename len -- )
    R/W CREATE-FILE ABORT" spew failed" >R
    R@ WRITE-FILE DROP  R> CLOSE-FILE DROP ;
-   
+
 { ----------------------------------------------------------------------
 Cell-counted strings aren't necessary for most things, but if available
 make simple strings that can be treated like their big brother "here-doc"
@@ -313,7 +313,7 @@ more better stack picture
 Function: SetEnvironmentVariable ( zvariable zvalue -- bool )
 
 :onsysload ( -- )
-   z" sflocal_user" 
+   z" sflocal_user"
    z" %SwiftForth\sfx\lib" SetEnvironmentVariable drop ;
 
 \ ----------------------------------------------------------------------
@@ -346,7 +346,7 @@ END-PACKAGE
 
 : +xroot ( addr n -- addr n )
    over c@ [char] % <> ?exit   1 /string  \ doesn't want rootpath
-   2dup rootpath count source-exists? if 2nip exit then 2drop         
+   2dup rootpath count source-exists? if 2nip exit then 2drop
    '\' scan  2dup binpath source-exists? if  2nip exit  then  2drop
    exepath source-exists? drop ;
 
@@ -355,8 +355,8 @@ END-PACKAGE
 
 -? : RESTART ( -- )
    POPPATH-ALL
-   -1 AllowSetForegroundWindow DROP   
-   GetCommandLine >PROCESS  drop  
+   -1 AllowSetForegroundWindow DROP
+   GetCommandLine >PROCESS  drop
    BYE ;
 
 \ ----------------------------------------------------------------------
@@ -538,7 +538,7 @@ ICODE R@+ ( -- x )   ( R: a -- a+4 )
    PUSH(EBX)                        \ save tos on stack
    0 [ESP] EBX MOV                  \ read top of return stack to tos
    0 [EBX] EBX MOV
-   4 # 0 [esp] add 
+   4 # 0 [esp] add
    RET   END-CODE
 
 ICODE 2@+ ( a-addr -- a+8 x1 x2 )
@@ -549,3 +549,10 @@ ICODE 2@+ ( a-addr -- a+8 x1 x2 )
    EAX 0 [EBP] MOV
    8 # 4 [EBP] ADD                  \ increment address
    RET   END-CODE
+
+\ ======================================================================
+\ another variation of .(
+
+: .[   [char] ] echo-until ; immediate
+
+

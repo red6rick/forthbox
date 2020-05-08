@@ -87,7 +87,7 @@ FXCHG ( addr addr -- )   swap the contents of the two float variables
    F>R ( -- ) f( r -- ) rs( -- r )   save a float on the return stack
    FR> ( -- ) f( -- r ) rs( r -- )   get a float from the return stack
    FR@ ( -- ) f( -- r ) rs( r -- )   copy a float from the return stack
-   
+
 ====================================================================== }
 
 icode f>r \ move a float from hardware stack to return stack, has to be inline
@@ -95,14 +95,14 @@ icode f>r \ move a float from hardware stack to return stack, has to be inline
    1 floats # esp sub
    0 [esp] qword fstp
    fnext
-   
+
 icode fr@
    0 [esp] qword fld
    f> fnext
 
 icode fr>
    0 [esp] qword fld
-   1 floats # esp add 
+   1 floats # esp add
    f> fnext
 
 icode fr@n ( n -- )
@@ -113,7 +113,7 @@ icode fr@n ( n -- )
 : (f.s) ( -- )   fdepth ?dup -exit
    begin  fdepth while  f>r  repeat
    ( *) 0 begin  2dup > while  dup fr@n n.  1+  repeat drop
-   ( *) begin  ?dup while  fr>  1- repeat ;  
+   ( *) begin  ?dup while  fr>  1- repeat ;
 
 : i.s ( ? -- ? )
    cr depth 0> if depth 0 do s0 @ i 1+ cells - @ . loop then ." <-Top "
@@ -138,7 +138,7 @@ GET-CURRENT ( *) CC-WORDS SET-CURRENT
    : FSINGLE ( -- )
       MEMBER  THIS SIZEOF
       ['] RUN-VALUE ['] COMPILE-VALUE  NEW-MEMBER
-      4 ,  ['] F@ , ['] F! ,  ['] F+! ,  ['] NOOP , 
+      4 ,  ['] F@ , ['] F! ,  ['] F+! ,  ['] NOOP ,
       1 FLOATS THIS >SIZE +! ;
 
 GET-CURRENT CC-WORDS <> THROW ( *) SET-CURRENT
@@ -197,7 +197,7 @@ end-package
 [then]
 
 { ======================================================================
-(F.3) formats a float in 
+(F.3) formats a float in
 ====================================================================== }
 
 
@@ -214,7 +214,8 @@ end-package
 : (f.3)   3 (f.frac) ;
 : f.3   (f.3) type ;
 
-: (f.8.3) ( -- addr len ) f( r -- )   8 3 (f.r.frac) ;
+: (f.8.3)  ( -- addr len ) f( r -- )    8 3 (f.r.frac) ;
+: (f.10.3) ( -- addr len ) f( r -- )   10 3 (f.r.frac) ;
 
 : %f.3 (f.8.3) %type ;
 
@@ -237,7 +238,7 @@ linear interpolation
 
                      (y1-y0)             (y1-y0)             yd
    y = y0 + (x-x0) * ------- = y0 + xm * ------- = y0 + xm * --
-                     (x1-x0)               xd                xd   
+                     (x1-x0)               xd                xd
 
 in 16 fp operations
 could be optimized into assembly very easily
@@ -253,7 +254,7 @@ could be optimized into assembly very easily
 [else]
 
 code interpolate ( -- )  f( y0 y1 x0 x1 x -- y )
-                     \ y0 y1 x0 x1 x 
+                     \ y0 y1 x0 x1 x
      st(2) fld       \ y0 y1 x0 x1 x x0
      fsubp           \ y0 y1 x0 x1 xm
      st(2) fxch      \ y0 y1 xm x1 x0
@@ -262,7 +263,7 @@ code interpolate ( -- )  f( y0 y1 x0 x1 x -- y )
      st(1) fxch      \ y0 md y1
      st(2) fld       \ y0 md y1 y0
      fsubp           \ y0 md yd
-     fmulp           \ y0 xd 
+     fmulp           \ y0 xd
      faddp
      fnext
 
@@ -400,10 +401,23 @@ function for fvalues NOT defined in fpmath.f
    DUP PARENT ['] (FVALUE) = IF  (ADDR-OF)  R> DROP  -1
    ELSE  DROP  R> >IN !  0  THEN ;
 
--? : &OF ( -- addr )   
+-? : &OF ( -- addr )
    LOBJ-COMP &OF-LOCAL  ?EXIT
-   LVAR-COMP &OF-LOCAL  ?EXIT 
+   LVAR-COMP &OF-LOCAL  ?EXIT
              &OF-VALUE  ?EXIT
              &OF-FVALUE ?EXIT
    3 'METHOD ! ; IMMEDIATE
+
+{ ======================================================================
+check the ndp status register for detectable errors
+====================================================================== }
+
+: ?ndp ( -- )
+   @fsts $05 and -exit
+   @fsts  $01 and  z" ndp error - invalid operation" ?throw
+   @fsts  $04 and  z" ndp error - divide by zero"    ?throw
+\  @fsts  $20 and  z" ndp error - lost precision"    ?throw
+               -1  z" unknown ndp error"             ?throw ;
+
+
 

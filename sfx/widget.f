@@ -10,7 +10,7 @@ and a surface to hang the widgets on. All are defined here.
 The primary external use in this file is the class WIDGET which
 is subclassed to define individual widgets.
 
-(C) 2020 Rick VanNorman  -- rick@digital-sawdust.com  
+(C) 2020 Rick VanNorman  -- rick@digital-sawdust.com
 ====================================================================== }
 
 { ----------------------------------------------------------------------
@@ -189,7 +189,7 @@ CLASS 8BIT-DIB
    SINGLE COLORMAP      \
    single bg
    single fg
-   
+
    256COLOR-BITMAP BUILDS PINFO  \ this contains the bitmap header info
 
    \ attach with no parameters; be sure to detach
@@ -241,7 +241,7 @@ CLASS 8BIT-DIB
    : print-xy-color ( x y addr len color -- )
       hdc  swap pinfo @rgb  SetTextColor >R
       hdc  bg pinfo @rgb  SetBkColor >r
-      2>r 2>r  hdc  2r> 2r>  TextOut drop 
+      2>r 2>r  hdc  2r> 2r>  TextOut drop
       hdc r> SetBkColor drop
       hdc r> SetTextColor drop ;
 
@@ -254,12 +254,12 @@ drawing pixels on the dib, as xy coordinates
 the natural quarterplane is intuitive; the native dib quarterplane isn't
 (at least to me!)
 
-      dib quarterplane        natural quarterplane 
-      +-----------------+     +-----------------+  
-      |0,99       199,99|     |0,0         199,0| 
-      |                 | <== |                 |  
-      |0,0         199,0|     |0,99       199,99|  
-      +-----------------+     +-----------------+  
+      dib quarterplane        natural quarterplane
+      +-----------------+     +-----------------+
+      |0,99       199,99|     |0,0         199,0|
+      |                 | <== |                 |
+      |0,0         199,0|     |0,99       199,99|
+      +-----------------+     +-----------------+
 
 POINT ( x y color -- )   is native dib quarterplane mapping
 DOT   ( x y color -- )   is natural quarterplane mapping
@@ -281,11 +281,11 @@ define some standard fonts for easy use in the widget class
 
 ====================================================================== }
 
-: terminal-5     -7 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ; 
-: terminal-6     -8 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ; 
-: terminal-9    -12 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ; 
-: terminal-12   -16 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ; 
-: terminal-12B  -16 0 0 0 800 0 0 0 255 1 2 1 49 z" Terminal"  ; 
+: terminal-5     -7 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ;
+: terminal-6     -8 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ;
+: terminal-9    -12 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ;
+: terminal-12   -16 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ;
+: terminal-12B  -16 0 0 0 800 0 0 0 255 1 2 1 49 z" Terminal"  ;
 : terminal-14   -19 0 0 0 400 0 0 0 255 1 2 1 49 z" Terminal"  ;
 : terminal-14B  -19 0 0 0 800 0 0 0 255 1 2 1 49 z" Terminal"  ;
 : terminal-20B  -26 0 0 0 800 0 0 0 255 1 2 1 49 z" Terminal"  ;
@@ -297,8 +297,8 @@ define some standard fonts for easy use in the widget class
 : lucida-console-10  -14 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ;
 : lucida-console-10b -14 0 0 0 800 0 0 0 0 3 2 1 49 z" Lucida Console" ;
 : lucida-console-12  -16 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ;
-: lucida-console-14  -19 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ; 
-: lucida-console-24  -34 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ; 
+: lucida-console-14  -19 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ;
+: lucida-console-24  -34 0 0 0 400 0 0 0 0 3 2 1 49 z" Lucida Console" ;
 
 { ======================================================================
 
@@ -412,7 +412,7 @@ manage fonts for our image
       image hdc  hfont  selectobject   drop
       image hdc measure ;
 
-   defer: font      lucida-console-9 ;
+   defer: font ( -- hfont )   lucida-console-12 CreateFont ;
 
 { ----------------------------------------------------------------------
 create the drawing surface, select the default font
@@ -425,7 +425,7 @@ also dispose of the drawing surface
       image whiteness  hfont set-font ;
 
    : create ( x y dc -- )
-      >r -1 -1 2swap   font CreateFont   r> create-surface ;
+      >r -1 -1 2swap   font    r> create-surface ;
 
    : destroy-dib ( -- )   image destroy-dib ;
 

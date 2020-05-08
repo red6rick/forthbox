@@ -57,6 +57,8 @@ control placement of surface objects
 
    : mywindow_shape ( -- x y cx cy )   0 0 100 20 ;
 
+   : extents ( -- x y cx cy )   ul xsize ysize ;
+
    textmetric builds tm
 
    : measure-font ( -- )
@@ -114,6 +116,12 @@ control placement of surface objects
       y dup ysize + rot within >r
       x dup xsize + rot within r> and ;
 
+   : send ( msg wparam lparam -- res )   >r mhwnd -rot r> sendmessage ;
+   : tell ( msg wparam lparam -- res )   send drop ;
+
+   : show ( -- )   mhwnd SW_SHOW ShowWindow drop ;
+   : hide ( -- )   mhwnd SW_HIDE ShowWindow drop ;
+
 end-class
 
 { ======================================================================
@@ -166,6 +174,16 @@ mystatic subclass myctext     \ right justified
         SS_CENTER or ;
 end-class
 
+mystatic subclass mybmp
+   single image   \ points to memory image of bmp file
+   : set-image ( bmp-addr -- )   to image ;
+   WM_PAINT message:
+      (o bitmap: bm )
+      mhwnd pad BeginPaint drop
+      image mhwnd bm centered
+      mhwnd pad EndPaint drop  0 ;
+end-class
+
 \ ======================================================================
 
 derived-control subclass mylistbox
@@ -179,12 +197,12 @@ derived-control subclass mylistbox
         WS_VSCROLL OR
         WS_HSCROLL OR ;
    : TYPE ( addr len -- )   R-BUF R@ ZPLACE
-      mHWND LB_ADDSTRING 0 R> :: SendMessage DROP
-      mHWND LB_GETCOUNT 0 0 :: SendMessage 500 > IF
-         mHWND LB_DELETESTRING 0 0 :: SendMessage DROP
+      LB_ADDSTRING 0 R> tell
+      LB_GETCOUNT 0 0 send 500 > IF
+         LB_DELETESTRING 0 0 tell
       THEN
-      mHWND LB_GETCOUNT 0 0 :: SendMessage 1-
-      mHWND LB_SETCURSEL ROT 0 :: SendMessage DROP ;
+      LB_GETCOUNT 0 0 send 1-
+      LB_SETCURSEL ROT 0 tell ;
 end-class
 
 \ ======================================================================
@@ -214,15 +232,12 @@ derived-control subclass myrichbox
       sized ;
    : post-make ( -- )   xsize ysize sized-as-chars ;
 
-   : send ( msg wparam lparam -- res )   >r mhwnd -rot r> sendmessage ;
-   : tell ( msg wparam lparam -- res )   send drop ;
-
    : sol? ( -- flag )
       EM_GETSEL 0 0 send $ffff and
       EM_LINEFROMCHAR third 0 send
       EM_LINEINDEX rot 0 send = ;
 
-   : goto-end ( -- )   EM_SETSEL -1 -1 tell ;
+   : goto-end ( -- )   EM_SETSEL -1 -1 tell  WM_VSCROLL SB_BOTTOM 0 tell ;
    : replace ( zstr -- )   EM_REPLACESEL 0 rot tell ;
    : append ( zstr -- )   goto-end replace ;
    : select-all ( -- )   EM_SETSEL 0 -1 tell ;
@@ -234,7 +249,7 @@ derived-control subclass myrichbox
          2dup 250 min r@ zplace  r@ append
          250 /string  dup 1 <
       until  2drop  r> drop ;
-   : writeln ( addr len -- )   sol? not if cr then type cr ;
+   : writeln ( addr len -- )   type cr ;
 
 end-class
 
@@ -252,10 +267,10 @@ derived-control subclass mynumberbox
    WM_CHAR message:
       defproc  wparam 13 = if  reflect  then ;
    : post-placed ( -- )
-      mhwnd EM_GETRECT 0 pad SendMessage drop
+      EM_GETRECT 0 pad send
       high tm ascent @ - 2/ pad cell+ +!
       charh negate pad 2 cells + +!
-      mhwnd EM_SETRECT 0 pad SendMessage drop ;
+      EM_SETRECT 0 pad send ;
    : get-float ( -- ) f( -- rval )
       pad dup 32 get-ztext >float ?exit  0.0e0 ;
    : set-float ( -- ) f( rval -- )
@@ -274,3 +289,90 @@ derived-control subclass mygroupbox
       mhwnd  HWND_BOTTOM x y xsize ysize  SWP_NOMOVE SetWindowPos drop
       r> border + r>  border + ;
 end-class
+
+\ ======================================================================
+
+\ ----------------------------------------------------------------------
+
+myctext subclass myflatbutton
+   : mywindow__style WS_CHILD WS_VISIBLE or SS_BITMAP or ;
+   single pressed
+   single down-color
+   single up-color
+
+   single xoffset
+   single yoffset
+   single wide
+
+   4 constant margin
+
+   256 buffer: text
+
+   : set-colors ( up down -- )   to down-color  to up-color ;
+
+   : thecolor ( -- color )
+      pressed if down-color else up-color then  ;
+
+   : draw-button ( -- )
+      hdc thecolor  SetBkColor drop
+      hdc xoffset yoffset ETO_OPAQUE
+      here mhwnd over GetClientRect drop
+      text count  0 ExtTextOut DROP ;
+
+   : release ( -- )   pressed -exit   0 to pressed  draw-button ;
+   : press   ( -- )   pressed ?exit   1 to pressed  draw-button ;
+
+   : re-text ( -- )
+      mhwnd text 1+ 254 GetWindowText wide min  text c!
+      xsize  text c@ charw *  - 2/  to xoffset ;
+
+   : set-text ( z -- )
+      mhwnd swap SetWindowText drop  re-text  draw-button ;
+
+   : post-make ( -- )
+      xsize to wide   margin to yoffset
+      xsize charw *  margin 2* + to xsize
+      ysize charh *  margin 2* + to ysize
+      $bebebe $ffc0ff set-colors
+      re-text draw-button ;
+
+   WM_PAINT MESSAGE: ( -- 0 )
+      mHWND PAD BeginPaint DROP
+         draw-button
+      mHWND PAD EndPaint DROP ;
+
+end-class
+
+\ ----------------------------------------------------------------------
+
+derived-control subclass mytextpane
+   : mywindow_classname z" STATIC" ;
+   : mywindow__style WS_CHILD WS_VISIBLE or SS_BITMAP or ;
+
+   : font ( -- hfont )   lucida-console-12 CreateFont ;
+
+   : char>pixel ( x y -- x y )   >r charw * r> charh * ;
+
+   : dot-text ( addr len x y -- )
+      2swap 2>r  2>r   hdc  2r> char>pixel 2r> TextOut drop ;
+
+   : print-column ( addr len x y -- )   locals| y x |
+      begin ( a l)
+         dup 0> while
+         2dup eol-scanner >r
+         third swap x y dot-text 1 +to y
+         r> /string
+      repeat 2drop ;
+
+   : post-make ( -- )
+      ysize charh * to ysize  xsize charw * to xsize ;
+
+   defer: render ( -- )   ;
+
+   WM_PAINT MESSAGE: ( -- 0 )
+      mHWND PAD BeginPaint DROP
+         render
+      mHWND PAD EndPaint DROP ;
+
+end-class
+
