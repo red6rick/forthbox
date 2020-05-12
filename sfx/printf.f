@@ -13,7 +13,7 @@ Z%> ( -- zaddr )      end and return zero terminated string
 
 ... to the output buffer ...
 
-%TYPE   ( a len -- )     add a string 
+%TYPE   ( a len -- )     add a string
 %DU.    ( d -- )         add an unsigned double integer
 %U.R    ( u n -- )       add a right justified unsigned integer
 %.R     ( n n -- )       add a right justified signed integer
@@ -107,3 +107,11 @@ using it.
    POSTPONE S" POSTPONE %type ;  IMMEDIATE
 
 : z%> ( -- zaddr )   0 %emit  pad cell+ ;
+
+: %.stack ( i*x -- i*x )
+   depth 0 max 0 ?do
+      s0 @ i 1+ cells - @ 4 %h.0 %bl
+   loop %" <-top" ;
+
+: <%.stack%> ( i*x -- i*x addr len )
+   <% %.stack %> ;
