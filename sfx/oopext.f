@@ -13,6 +13,8 @@ package oop
 THROW#
    S" Execution not allowed during class compilation"   >THROW ENUM IOR_OOP_NOTALLOWED
    S" Invalid method"                                   >THROW ENUM IOR_INVALID_METHOD
+   S" Not a class"                                      >THROW ENUM IOR_OOP_NOTACLASS
+   S" Not a colon definition"                           >THROW ENUM IOR_OOP_NOTCOLON
 TO THROW#
 
 private
@@ -43,9 +45,9 @@ GET-CURRENT ( *) CC-WORDS SET-CURRENT
 
 
    : builds:id
-      this sizeof >r  >in @ >r  
+      this sizeof >r  >in @ >r
       [ +cc ] builds [ -cc ]
-      r> >in !  
+      r> >in !
       <%  r> %.  %"  constant id_"
          bl word count %type
       %> evaluate ;
@@ -72,6 +74,50 @@ RELINK-CHILDREN fixes the static links of all of the children
 
 : DEREF ( class object member -- xt object )
    ROT FIND-MEMBER SWAP ;
+{ ----------------------------------------------------------------------
+[MY] will return an actual executable xt for the specified member
+in the current class context (THIS).  Other extensions are possible
+but I don't know what I want, yet.
+
+while defining a class which already contains the ondestroy method:
+
+   [my] ondestroy
+
+[METHOD] will parse for two names, first the class then the
+method and return an executable token for the method.
+
+at any arbitrary time:
+
+   [METHOD] genericwindow onclose
+
+
+---------------------------------------------------------------------- }
+
+: find-executable-member ( method class -- xt )
+   (find-member) 0= ior_oop_notmember ?throw
+   dup cell- @ ['] a-colon <> ior_oop_notcolon ?throw
+   3 cells + @ ;
+
+: find-class ( addr len -- 'class )
+   classes begin
+      @rel ?dup while   \ a n b
+      3dup  body> >name count compare(nc)
+   0= until nip nip cell+ @ else 2drop 0 then ;
+
+PUBLIC
+
+: [my] ( -- xt )
+   'member 0= ior_oop_notmember ?throw  this find-executable-member
+   state @ if postpone literal then ;  immediate
+
+: [method] ( -- xt )
+   bl word count find-class  dup 0= ior_oop_notaclass ?throw
+   'member 0= ior_oop_notmember ?throw  swap  find-member
+   state @ if postpone literal then ;  immediate
+
+: map ( o o o n xt -- )
+   locals| xt n |
+   n 0 do  xt execute loop ;
 
 { ----------------------------------------------------------------------
 MEMBERS is a function to traverse the member lists of a class, reporting
@@ -185,12 +231,12 @@ starting with its input and appending the rest of the original tib
 1024 cell+ buffer: rewrite-buffer
 
 : rewrite-tib ( addr len pos -- )   locals| pos |
-   1024 cell+ r-alloc >r  0 r@ !  
-   'tib @ pos r@   1024 |xappend| 
-   ( addr len) r@ 1024 |xappend|     
-   s"  " r@ 1024 |xappend|           
-   /source r@ 1024 |xappend|         
-   r> @+ rewrite-buffer xplace       
+   1024 cell+ r-alloc >r  0 r@ !
+   'tib @ pos r@   1024 |xappend|
+   ( addr len) r@ 1024 |xappend|
+   s"  " r@ 1024 |xappend|
+   /source r@ 1024 |xappend|
+   r> @+ rewrite-buffer xplace
    rewrite-buffer @+ #tib 2!  pos >in ! ;
 
 : <retib ( -- )
@@ -209,11 +255,11 @@ addresses for assignment come off stack in reverse order, just like locals
 : bar ( a1 a2 -- )   (o px= a2 px= a1 )
 
 \ use reference for blah, make new poo on stack frame
-(o point= blah   point: poo )   
+(o point= blah   point: poo )
 ---------------------------------------------------------------------- }
 
 : (o
-   postpone [objects 
+   postpone [objects
    <retib
       [char] ) word count
       s" =" s"  names" subst here place
@@ -227,13 +273,13 @@ rewrite rules for object building, to make the syntax easier.
 
 class poo ... end-class  ( or subclass)
 
-poo builds this             == same as ==>    poo: this    
+poo builds this             == same as ==>    poo: this
 3 poo builds[] that[]       == same as ==>    3 poo: that[]
 ---------------------------------------------------------------------- }
 
 : insert-builds ( addr len -- )
    <retib
-      bl peek-word  count s" []" -match nip 0= >r    
+      bl peek-word  count s" []" -match nip 0= >r
       here place  s"  builds" here append
       r> if  s" []" here append  then
       here count
