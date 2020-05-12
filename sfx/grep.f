@@ -1,3 +1,10 @@
+{ ----------------------------------------------------------------------
+a horrible choice of name for this file and function.
+grep is not what this does; no regular expression matching
+Rick VanNorman   8May2020  rick@neverslow.com
+---------------------------------------------------------------------- }
+
+
 
 icode lower ( char -- char )
    char A # bl cmp                  \ check char against "a"
