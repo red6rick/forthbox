@@ -461,7 +461,7 @@ GENERICWINDOW SUBCLASS gui-wrapper
    WM_SIZE     MESSAGE: ( -- res )   RESIZED AFTER-SIZING 1 ;
    MI_ABOUT    COMMAND: ( -- res )   mHWND z" about" z" sample" MB_OK MessageBox ;
    MI_EXIT     COMMAND: ( -- res )   mHWND WM_CLOSE 0 0 SendMessage ;
-   
+
 
    WM_GETBASEADDR message:   addr ;
 
@@ -567,3 +567,53 @@ application. The following is a much better implementation.
          WINMSG DispatchMessage DROP
       THEN
    REPEAT  R> DROP ;
+
+{ --------------------------------------------------------------------
+Common control class names
+-------------------------------------------------------------------- }
+
+CREATE WC_HEADER           ,Z" SysHeader32"
+CREATE WC_LISTVIEW         ,Z" SysListView32"
+CREATE WC_TREEVIEW         ,Z" SysTreeView32"
+CREATE WC_COMBOBOXEX       ,Z" ComboBoxEx32"
+CREATE WC_TABCONTROL       ,Z" SysTabControl32"
+CREATE WC_IPADDRESS        ,Z" SysIPAddress32"
+CREATE WC_PAGESCROLLER     ,Z" SysPager"
+CREATE WC_NATIVEFONTCTL    ,Z" NativeFontCtl"
+CREATE WC_TOOLTIPS         ,Z" tooltips_class32"
+CREATE WC_TRACKBAR         ,Z" msctls_trackbar32"
+CREATE WC_UPDOWN           ,Z" msctls_updown32"
+CREATE WC_PROGRESS         ,Z" msctls_progress32"
+CREATE WC_HOTKEY           ,Z" msctls_hotkey32"
+CREATE WC_ANIMATE          ,Z" SysAnimate32"
+CREATE WC_MONTHCAL         ,Z" SysMonthCal32"
+CREATE WC_DATETIMEPICK     ,Z" SysDateTimePick32"
+
+: COMMON-CONTROL ( owner type x y cx cy -- handle )
+   LOCALS| cy cx y x type owner |
+   0 type 0  WS_BORDER WS_VISIBLE OR WS_CHILD OR WS_TABSTOP OR
+   x y cx cy owner 0 HINST 0 CreateWindowEx ;
+
+\ -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+1 IMPORT: InitCommonControlsEx
+
+$00000001 CONSTANT ICC_LISTVIEW_CLASSES \ listview, header
+$00000002 CONSTANT ICC_TREEVIEW_CLASSES \ treeview, tooltips
+$00000004 CONSTANT ICC_BAR_CLASSES      \ toolbar, statusbar, trackbar, toolti
+$00000008 CONSTANT ICC_TAB_CLASSES      \ tab, tooltips
+$00000010 CONSTANT ICC_UPDOWN_CLASS     \ updown
+$00000020 CONSTANT ICC_PROGRESS_CLASS   \ progress
+$00000040 CONSTANT ICC_HOTKEY_CLASS     \ hotkey
+$00000080 CONSTANT ICC_ANIMATE_CLASS    \ animate
+$000000FF CONSTANT ICC_WIN95_CLASSES
+$00000100 CONSTANT ICC_DATE_CLASSES     \ month picker, date picker, time pick
+$00000200 CONSTANT ICC_USEREX_CLASSES   \ comboex
+$00000400 CONSTANT ICC_COOL_CLASSES     \ rebar (coolbar) control
+$00000800 CONSTANT ICC_INTERNET_CLASSES
+$00001000 CONSTANT ICC_PAGESCROLLER_CLASS  \ page scroller
+$00002000 CONSTANT ICC_NATIVEFNTCTL_CLASS  \ native font control
+
+: /COMMON-CONTROLS ( mask -- )
+   2 CELLS DUP R-ALLOC >R  R@ 2!  R> InitCommonControlsEx 0= THROW ;
+
