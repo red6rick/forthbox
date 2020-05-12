@@ -71,6 +71,17 @@ window size; SetClientSize accounts for borders and menu bars.
    handle GetClientSize DROP ( current width and height of client )
    ( handle x y wx wy cx cy)  ROT SWAP - H + >R  - W + R>  1 MoveWindow ;
 
+{ ----------------------------------------------------------------------
+HTMLHELP is easy to interface to, and makes linkage for chm files
+
+\ simply open the help file
+hwnd z" \path\to\my.chm" 0 0 HtmlHelp drop
+
+\ open the help file at a particular topic
+hwnd z" \path\to\my.chm::/tutorial.htm" 0 0 htmlhelp drop
+
+---------------------------------------------------------------------- }
+
 : SYSTEM-OPEN ( z -- )
    HWND 0 ROT 0 0 SW_NORMAL ShellExecute DROP ;
 
