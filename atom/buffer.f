@@ -41,6 +41,8 @@ class atom-buffer
    : same? ( addr len -- flag )
       2dup =fname if  =bname  else  2drop -1  then ;
 
+   defer: .info ;
+
 \ ======================================================================
    
 

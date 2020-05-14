@@ -44,7 +44,7 @@ atom-buffer reopen
    : (gapage) ( buf gap egap ebuf width -- addr len )
       <% %gapage %> ;
 
-   : dot ( -- addr len )
+   : info ( -- addr len )
       <% 
          %" bname  " bname count %type %cr
          %" fname  " fname count %type %cr
@@ -61,12 +61,14 @@ atom-buffer reopen
       %> ;      
 
    : bug ( -- )
-      addr ['member-xt] dot mon set-callback  mon init ;
+      addr ['member-xt] info mon set-callback  mon init ;
 
    : set-bname ( addr len -- )
       2dup set-bname  pad zplace  pad mon set-title ;
       
    : init ( -- )   init bug ;
+
+   : .info cr zcount type cr h.s  cr info types key 27 = if quit then ;
 
 end-class
 

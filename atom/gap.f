@@ -8,6 +8,9 @@ Rick VanNorman  30Apr2020  rick@neverslow.com
 
 atom-buffer reopen
 
+   : head ( -- addr len )   buf gap over - ;
+   : tail ( -- addr len )   egap ebuf over - ;
+
    : gapsize ( -- n )   egap gap - ;
    
    \ Given a buffer offset, convert it to a pointer into the buffer 
@@ -62,17 +65,26 @@ atom-buffer reopen
          egap c@ gap c!  1 +to egap 1 +to gap
       repeat drop ;
 
-   : move-gap ( offset --  egap-pos )   ptr
-      dup gap   < if  <move-gap  then
-      egap over < if  move-gap>  then
-      drop egap pos ;
+   : move-gap ( offset --  egap-pos )
+      ptr >r
+      r@ gap   < if  r@ <move-gap  then
+      egap r@  < if  r@ move-gap>  then
+      r> drop
+      egap pos ;
 
    : insert-file ( zstr mod -- flag )   >r >r 
       r@ zcount file-status nip z" No such file" ?throw
       r@ zcount slurp ( a n)
-.s      dup grow-gap 
-.s      point move-gap  to point
-.s      2dup   gap swap cmove  swap free
+\ z" a" .info
+\      dup grow-gap    
+z" b" .info
+      point move-gap  to point 
+z" c" .info
+      2dup   gap swap 
+z" d" .info
+      cmove
+
+      swap free drop
       dup +to gap  r> z" read" file-msg
       B_MODIFIED  r> 0= if invert  then  flags and to flags
       -1 ;

@@ -46,13 +46,24 @@ oop +order
    [objects atom-buffer names foo objects]
    foo addr  atom-buffer swap [member] construct broadcast 
    foo init s" this" foo set-bname 
-   buffer-list @ foo link !  foo link buffer-list !
-   foo addr ;
+   buffer-list @ foo link !  foo link buffer-list ! ;
+
 previous
+
 atom-buffer builds foo
 foo addr foop
+
 2048 foo grow-gap
-s" clip_temp.txt" slurp   value len value addr   
+s" sample.txt" slurp   value len value addr   
+
+.(
+
+grow-gap fails in an unknown way
+
+)
+
+\\
+
 addr foo buf 1200 cmove   
 1200 +to foo gap
 500 foo move-gap drop
