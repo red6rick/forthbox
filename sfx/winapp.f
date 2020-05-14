@@ -374,8 +374,8 @@ GENERICWINDOW SUBCLASS gui-wrapper
    SINGLE BOTTOM
 
    DEFER: MyAppName     ( -- zstr )   Z" MyAppName" ;
-   DEFER: Has_Statusbar ( -- flag )   FALSE ;
-   DEFER: Has_Menu      ( -- flag )   FALSE ;
+   DEFER: HasStatusbar ( -- flag )   FALSE ;
+   DEFER: HasMenu      ( -- flag )   FALSE ;
 
    DEFER: INIT-MENU     ( -- )   ;
    DEFER: AFTER-CREATE  ( -- )   ;
@@ -425,11 +425,11 @@ GENERICWINDOW SUBCLASS gui-wrapper
       /BORDERS RESIZED  RESTORE-WINDOW-PLACEMENT ;
 
    : /STATUSBAR ( -- )
-      Has_Statusbar IF  mHWND STAT ATTACH  THEN ;
+      HasStatusbar IF  mHWND STAT ATTACH  THEN ;
 
    : /MENU ( -- )
-      Has_Menu IF
-         mHWND Has_Menu LoadMenuIndirect SetMenu DROP
+      HasMenu IF
+         mHWND HasMenu LoadMenuIndirect SetMenu DROP
          mHWND GetMenu to hMenu
          INIT-MENU
       THEN ;
