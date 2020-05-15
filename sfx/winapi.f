@@ -5,6 +5,7 @@ more api calls, and pseudo-api calls
 ---------------------------------------------------------------------- }
 
 
+Function: GetSysColorBrush ( index -- hbrush )
 Function: MonitorFromPoint ( x y flag -- monitor )
 Function: AllowSetForegroundWindow      ( process -- bool )
 Function: TerminateThread ( hthread n -- ior )

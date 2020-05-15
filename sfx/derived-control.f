@@ -222,7 +222,7 @@ derived-control subclass myrichbox
    : mywindow_classname ( -- z )
       z" Msftedit.dll" loadlibrary drop   z" RICHEDIT50W" ;
    : mywindow_style ( -- n )
-      0 WS_TABSTOP OR WS_CHILD OR WS_VISIBLE OR
+      0 WS_TABSTOP OR WS_CHILD OR WS_VISIBLE OR WS_BORDER or
         WS_VSCROLL or WS_HSCROLL or ES_MULTILINE or ES_AUTOVSCROLL or
         ES_AUTOHSCROLL or ;
    : font ( -- hfont )   lucida-console-12 CreateFont ;
