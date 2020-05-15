@@ -1,11 +1,14 @@
 { ----------------------------------------------------------------------
-build a window with tabs
+Build a window with tabs.
+
+The tab control, unlike the other "derived-control" children, doesn't
+factor into an easily reusable subclass. I think each use will be
+custom. This provides a template to build on.
 
 Rick VanNorman  13May2020  rick@neverslow.com
 ---------------------------------------------------------------------- }
 
-: hide SW_HIDE ShowWindow drop ;
-: show SW_SHOW ShowWindow drop ;
+\ define the tab control item data structure
 
 class TCITEM
    single mask
@@ -16,6 +19,13 @@ class TCITEM
    single image
    single lparam
 end-class   
+
+{ ----------------------------------------------------------------------
+We assign a richedit control to each of the tabs; anything else could
+be assigned. POST-MAKE is called after the tab control is instantiated
+and creates all of the tab children. These determine the size of the
+tab control so its parent can set it accordingly.
+---------------------------------------------------------------------- }
 
 derived-control subclass mytabcontrol
    : mywindow_classname WC_TABCONTROL ;
@@ -34,29 +44,41 @@ derived-control subclass mytabcontrol
       mhwnd TCM_INSERTITEMA r> ti addr sendmessage drop ;
 
    : place-children ( x y -- X Y )
-      2dup zero placed
-      zero ul one placed
-      zero ul two placed ;
+      2dup    zero placed      \ initial placement, 
+      zero ul one  placed      \ others overlay its origin but 
+      zero ul two  placed ;    \ might be a different size
 
-   : init-children ( -- )
-      z" zero" 0 new-tab mhwnd  64 16 0 zero make   
-      z" one"  1 new-tab mhwnd  64 16 1 one  make   
-      z" two"  2 new-tab mhwnd  64 16 2 two  make   ;
+   : create-tabs ( -- )   
+      z" Msftedit.dll" loadlibrary drop 
+      z" zero" 0 new-tab   mhwnd 64 16 0 zero make   
+      z" one"  1 new-tab   mhwnd 64 16 0 one  make   
+      z" two"  2 new-tab   mhwnd 64 16 0 two  make   ;
 
-   : post-make ( -- )
-      init-children
-      mhwnd TCM_GETITEMRECT 0 pad SendMessage drop
-      pad @  pad 3 cells + @
-      place-children to ysize to xsize ;
+   : hideall ( -- )
+      zero hide one hide two hide ;
+
+   : select-tab ( n -- )
+      mhwnd TCM_SETCURSEL rot 0 SendMessage drop ;
       
+   : show-content ( n -- )
+      hideall case
+         0 of  zero show  endof
+         1 of  one  show  endof
+         2 of  two  show  endof
+      endcase ;
+
    : selected ( -- n )
       mhwnd TCM_GETCURSEL 0 0 SendMessage ;
 
+   : post-make ( -- )   create-tabs
+      mhwnd TCM_GETITEMRECT 0 pad SendMessage drop 
+      5  pad 3 cells + @ 5 + ( place children below tab buttons)
+      place-children to ysize to xsize
+      selected show-content ;
 
+   : update ( -- )   selected  show-content ;
 
 end-class
-
-
 
 { ----------------------------------------------------------------------
 Finally, we can define a framework and create a tab control in it.
@@ -64,22 +86,12 @@ Finally, we can define a framework and create a tab control in it.
 
 gui-framework subclass myapp
    : MyAppName ( -- z )   z" MyTabDemo" ;
-
+   : MyClass_hbrBackground ( -- h )  COLOR_BTNFACE GetSysColorBrush ;
+   
    mytabcontrol builds:id tabs
-
-\   : make-tabs ( -- )
-\      TCIF_TEXT to ti mask  
-\      z" zero" 0 new-tab
-\      z" one"  1 new-tab
-\      z" two"  2 new-tab ;
 
    : place-children ( x y -- X Y )
       2dup tabs placed ;
-
-   : init-tabs ( -- )
-      z" zero" 0 tabs new-tab  
-      z" one"  1 tabs new-tab  
-      z" two"  2 tabs new-tab ;
 
    : init-children ( -- )
       mhwnd 200 200 0 tabs make  ;
@@ -89,8 +101,7 @@ gui-framework subclass myapp
 
    : tab-notification ( notification -- )   
       case
-         TCN_SELCHANGING of  tabs selected  0 endof \ 0=can change
-         TCN_SELCHANGE   of  tabs selected  0 endof
+         TCN_SELCHANGE   of  tabs update 0 endof
       endcase ;
 
    WM_NOTIFY message:
@@ -100,58 +111,6 @@ gui-framework subclass myapp
  
 end-class
 
-single one
-single two
-single zero
-
 myapp builds app
-: go   app construct
-   app tabs one mhwnd to one
-   app tabs two mhwnd to two
-   app tabs zero mhwnd to zero
-   ;
+: go   app construct ;
 
-z" Msftedit.dll" loadlibrary drop
-
-
-
-
-\ app tabs mhwnd constant z   
-\ z z" RICHEDIT50W" 10 10 170 170 common-control   
-\ z z" RICHEDIT50W" 10 10 170 170 common-control
-\ restart
-\ go
-\ z" Msftedit.dll" loadlibrary drop
-\ app tabs mhwnd constant z
-\ z pad getclientrect
-\ pad  16 idump
-\ z TCM_ADJUSTRECT 0 pad sendmessage .
-\ pad 16 idump
-\ \ z z" RICHEDIT50W" 10 10 170 170 common-control
-\ z z" RICHEDIT50W" 4 24 196 196 common-control
-
-
-
-
-
-\ ----------------------------------------------------------------------
-\\ \\\\ from microsoft
-\\\ \\\ https://docs.microsoft.com/en-us/windows/win32/controls/create-a-tab-control-in-the-main-window
-\\\\ \\ 
-\\\\\ \ 
-
-
-// Creates a child window (a static control) to occupy the tab control's 
-//   display area. 
-// Returns the handle to the static control. 
-// hwndTab - handle of the tab control. 
-// 
-HWND DoCreateDisplayWindow(HWND hwndTab) 
-{ 
-    HWND hwndStatic = CreateWindow(WC_STATIC, L"", 
-        WS_CHILD | WS_VISIBLE | WS_BORDER, 
-        100, 100, 100, 100,        // Position and dimensions; example only.
-        hwndTab, NULL, g_hInst,    // g_hInst is the global instance handle
-        NULL); 
-    return hwndStatic; 
-}
