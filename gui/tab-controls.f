@@ -26,7 +26,7 @@ derived-control subclass mytabcontrol
    myrichbox builds:id two
 
    : new-tab ( ztext index -- )   >r
-      swap  here 3 cells +!  TCIF_TEXT here !
+      here 3 cells + !  TCIF_TEXT here !
       mhwnd TCM_INSERTITEMA r> here sendmessage drop ;
 
    : place-children ( x y -- X Y )
