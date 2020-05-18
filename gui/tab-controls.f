@@ -8,18 +8,6 @@ custom. This provides a template to build on.
 Rick VanNorman  13May2020  rick@neverslow.com
 ---------------------------------------------------------------------- }
 
-\ define the tab control item data structure
-
-class TCITEM
-   single mask
-   single state
-   single statemask
-   single ztext
-   single textmax
-   single image
-   single lparam
-end-class   
-
 { ----------------------------------------------------------------------
 We assign a richedit control to each of the tabs; anything else could
 be assigned. POST-MAKE is called after the tab control is instantiated
@@ -37,11 +25,9 @@ derived-control subclass mytabcontrol
    myrichbox builds:id one
    myrichbox builds:id two
 
-   tcitem builds ti
-   
-   : new-tab ( ztext index -- )   >r  to ti ztext
-      TCIF_TEXT to ti mask 
-      mhwnd TCM_INSERTITEMA r> ti addr sendmessage drop ;
+   : new-tab ( ztext index -- )   >r
+      swap  here 3 cells +!  TCIF_TEXT here !
+      mhwnd TCM_INSERTITEMA r> here sendmessage drop ;
 
    : place-children ( x y -- X Y )
       2dup    zero placed      \ initial placement, 
