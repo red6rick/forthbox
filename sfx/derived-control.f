@@ -349,9 +349,18 @@ derived-control subclass mytextpane
    : mywindow_classname z" STATIC" ;
    : mywindow__style WS_CHILD WS_VISIBLE or SS_BITMAP or ;
 
-   : font ( -- hfont )   lucida-console-12 CreateFont ;
+   single xmargin
+   single ymargin
+   single bkcolor
+   single bkbrush
 
-   : char>pixel ( x y -- x y )   >r charw * r> charh * ;
+   : font ( -- hfont )
+      0 to xmargin  0 to ymargin
+      $ffffff to bkcolor  
+      lucida-console-12 CreateFont ;
+
+   : char>pixel ( x y -- x y )
+      >r charw * xmargin +  r> charh * ymargin + ;
 
    : dot-text ( addr len x y -- )
       2swap 2>r  2>r   hdc  2r> char>pixel 2r> TextOut drop ;
@@ -364,15 +373,77 @@ derived-control subclass mytextpane
          r> /string
       repeat 2drop ;
 
+   : measure ( cols rows -- )
+      charh * ymargin 2* + to ysize
+      charw * xmargin 2* + to xsize ;
+
    : post-make ( -- )
-      ysize charh * to ysize  xsize charw * to xsize ;
+      xsize ysize measure ;
 
    defer: render ( -- )   ;
 
    WM_PAINT MESSAGE: ( -- 0 )
-      mHWND PAD BeginPaint DROP
+      (o paintstruct: ps )
+      mHWND ps addr BeginPaint ( dc)
+         ( dc) ps paint addr bkbrush FillRect drop
          render
-      mHWND PAD EndPaint DROP ;
+      mHWND ps addr EndPaint DROP ;
+
+   : set-bk-color ( color-ref -- )   to bkcolor
+      hdc bkcolor SetBkColor drop
+      bkcolor CreateSolidBrush to bkbrush
+      mhwnd 0 -1 InvalidateRect drop ;
 
 end-class
 
+\ ----------------------------------------------------------------------
+\ this is an incomplete control -- it needs user definition
+\ to be useful
+
+derived-control subclass mytabframework
+
+   label: tcitem         \ an embedded data structure
+   single tc_mask
+   single tc_state
+   single tc_statemask
+   single tc_ztext
+   single tc_ztextmax
+   single tc_image
+   single tc_lparam
+
+   : mywindow_classname ( -- class )   WC_TABCONTROL ;
+   : mywindow_style ( -- n )   WS_CHILD  WS_VISIBLE OR ;
+
+   \ new-tab ignores index by inserting an impossibly large
+   \ index, it forces the tabs to insert sequentially from zero
+   \ the handle of the tab content is kept in the lparam field
+
+   : new-tab ( handle ztext -- )
+      TCIF_TEXT  TCIF_PARAM or  to tc_mask
+      to tc_ztext  to tc_lparam
+      mhwnd TCM_INSERTITEMA 9999 tcitem SendMessage drop ;
+
+   : select-tab ( n -- )
+      mhwnd TCM_SETCURSEL rot 0 SendMessage drop ;
+
+   : selected ( -- n )
+      mhwnd TCM_GETCURSEL 0 0 SendMessage ;
+
+   : get-tab-lparam ( n -- )
+      TCIF_PARAM to tc_mask  
+      mhwnd TCM_GETITEMA rot tcitem SendMessage drop
+      tc_lparam ;
+
+   : tab-count ( -- n )
+      mhwnd TCM_GETITEMCOUNT 0 0 SendMessage ;
+
+   : hideall ( -- )
+      tab-count 0 ?do
+         i get-tab-lparam SW_HIDE ShowWindow drop
+      loop ;
+
+   : show-tab ( n -- )
+      hideall  dup select-tab
+      get-tab-lparam SW_SHOW ShowWindow drop ;
+
+end-class
