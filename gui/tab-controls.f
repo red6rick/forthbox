@@ -15,54 +15,34 @@ and creates all of the tab children. These determine the size of the
 tab control so its parent can set it accordingly.
 ---------------------------------------------------------------------- }
 
-derived-control subclass mytabcontrol
-   : mywindow_classname WC_TABCONTROL ;
-   : mywindow_style ( -- n )
-      0 WS_CHILD OR
-        WS_VISIBLE OR ;
+mytabframework subclass mytabcontrol
 
    myrichbox builds:id zero
    myrichbox builds:id one
    myrichbox builds:id two
-
-   : new-tab ( ztext index -- )   >r
-      here 3 cells + !  TCIF_TEXT here !
-      mhwnd TCM_INSERTITEMA r> here sendmessage drop ;
 
    : place-children ( x y -- X Y )
       2dup    zero placed      \ initial placement, 
       zero ul one  placed      \ others overlay its origin but 
       zero ul two  placed ;    \ might be a different size
 
-   : create-tabs ( -- )   
-      z" Msftedit.dll" loadlibrary drop 
-      z" zero" 0 new-tab   mhwnd 64 16 0 zero make   
-      z" one"  1 new-tab   mhwnd 64 16 0 one  make   
-      z" two"  2 new-tab   mhwnd 64 16 0 two  make   ;
+   : make-tab-children ( -- )
+      mhwnd 64 16 0 zero make   
+      mhwnd 64 16 0 one  make   
+      mhwnd 64 16 0 two  make ;
 
-   : hideall ( -- )
-      zero hide one hide two hide ;
-
-   : select-tab ( n -- )
-      mhwnd TCM_SETCURSEL rot 0 SendMessage drop ;
-      
-   : show-content ( n -- )
-      hideall case
-         0 of  zero show  endof
-         1 of  one  show  endof
-         2 of  two  show  endof
-      endcase ;
-
-   : selected ( -- n )
-      mhwnd TCM_GETCURSEL 0 0 SendMessage ;
+   : create-tabs ( -- )   make-tab-children
+      zero mhwnd z" zero" new-tab   
+      one  mhwnd z" one"  new-tab   
+      two  mhwnd z" two"  new-tab   ;
 
    : post-make ( -- )   create-tabs
       mhwnd TCM_GETITEMRECT 0 pad SendMessage drop 
       5  pad 3 cells + @ 5 + ( place children below tab buttons)
       place-children to ysize to xsize
-      selected show-content ;
+      0 show-tab ;
 
-   : update ( -- )   selected  show-content ;
+   : update ( -- )   selected  show-tab ;
 
 end-class
 
