@@ -304,5 +304,37 @@ poo builds this             == same as ==>    poo: this
    dup this >size @ < abort" size already exceeds request"
    this >size ! [previous] ;
 
- ;
+{ ----------------------------------------------------------------------
+new defining methods
+
+example:
+   class point single x single y : dot x . y . ;   end-class
+   point builds pt  
+   s" corner" pt anew value xx
+   corner dot
+   5 to corner x  7 to corner y
+   corner dot
+   using point xx dot
+---------------------------------------------------------------------- }
+
+: create-from-string ( addr len -- xt )
+   get-current (wid-create)
+   last @ >create !  last 2 cells + @ code> ;
+
+oop +order
+
+: build-from-string ( addr len class -- addr )
+   -rot create-from-string  immediate
+   dup >data >r  ,   dup sizeof (builds) r>
+   does> ['] >data  (object) ;
+
+previous
+
+supreme reopen
+
+   : anew ( addr len -- 'obj )
+      this build-from-string ;
+
+end-class  supreme relink-children
+
 
