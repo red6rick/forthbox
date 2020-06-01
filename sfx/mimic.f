@@ -8,6 +8,10 @@ oop +order
       then ( else) @ ['] >data (object) ;
 previous
 
+
+
+\\
+
 class point  single x single y : dot x . y . ; end-class
 class joint  : dot ." up in smoke" ; end-class
 
@@ -15,5 +19,8 @@ point builds pt
 joint builds doobie
 
 mimic foo
+
+foo mimics point   foo dot
+foo mimics joint   foo dot
 
 
