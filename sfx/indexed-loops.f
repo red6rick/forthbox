@@ -84,6 +84,21 @@ end-class  local-variables relink
 
 ' search-local-space-ndxes is (findext)
 
+{ ----------------------------------------------------------------------
+define a named local variable index for a loop
+requires that a local variable already exist, and from the
+point index: is used, the variable represents the loop index
+not any previous local value.... an example:
+
+: test   0 0 locals| xx yy |
+   index: xx  10 0 do
+      index: yy  8 0 do
+         cr xx . yy . ." <=> " j . i .
+      loop
+   loop ;
+---------------------------------------------------------------------- }
+
+
 : index: ( -- )
    lvar-comp becomes-ndx 0= abort" no local variable for ndx:" ; immediate
 
