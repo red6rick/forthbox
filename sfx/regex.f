@@ -1,5 +1,3 @@
-\ include regex.f
-
 { ----------------------------------------------------------------------
 Very simple regular expression search
 (c) 2014 rick vannorman
@@ -19,8 +17,10 @@ DEFER MATCHHERE
    ROT >R BEGIN
       2DUP MATCHHERE IF  2DROP  R> DROP   -1 EXIT  THEN
       DUP C@ WHILE
-      COUNT R@ <>  R@ [CHAR] . <> OR 0=
+      COUNT R@ =  R@ [CHAR] . = or 0=
    UNTIL THEN  2DROP R> DROP  0 ;
+   
+
 
 \ matchhere: search for regexp at beginning of text
 
@@ -51,36 +51,36 @@ DEFER MATCHHERE
       COUNT 0=                                  \ one char at a time until
    UNTIL 2DROP 0 ;                              \ the text string is exhausted
 
-{ ----------------------------------------------------------------------
 \ ----------------------------------------------------------------------
-\\ \\\\ tests for regex
-\\\ \\\
-\\\\ \\
-\\\\\ \
+\\ \\\\ a little testing never hurt!
+\\\ \\\ 
+\\\\ \\ 
+\\\\\ \ 
 
-(  include c:\rvn\testbench.f)
 
-testing matchrx
+: z= ( z z -- flag )   zcount rot zcount compare 0= ;
 
-try( z" abc"          z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" .bc"          z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" a.c"          z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" ab."          z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" a*bc"         z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" .*bc"         z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^a*bc"        z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^.*bc"        z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^aaaa*bc"     z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^aaaaa*bc"    z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^aaaaaa*bc"   z" aaaaabcdef" -- z" aaaaabcdef" )( z )  \ a* matches 0 or more
-try( z" ^aaaaaaa*bc"  z" aaaaabcdef" -- 0 )( n )
-try( z" abc"          z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" abc$"         z" aaaaabcdef" -- 0 )( n )
-try( z" abcd$"        z" aaaaabcdef" -- 0 )( n )
-try( z" abcde$"       z" aaaaabcdef" -- 0 )( n )
-try( z" abcdef$"      z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" abcde.$"      z" aaaaabcdef" -- z" abcdef" )( z )
-try( z" ^.*abcde.$"   z" aaaaabcdef" -- z" aaaaabcdef" )( z )
-try( z" ^f*abcde.$"   z" aaaaabcdef" -- z" aaaaabcdef" )( z )
+: x? .s #tib 2@ type space ;
+
+x? z" a*bc"         z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" abc"          z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" .bc"          z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" a.c"          z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" ab."          z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" .*bc"         z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^a*bc"        z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^.*bc"        z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^aaaa*bc"     z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^aaaaa*bc"    z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^aaaaaa*bc"   z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^aaaaaaa*bc"  z" aaaaabcdef" matchrx                0= .
+x? z" abc"          z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" abc$"         z" aaaaabcdef" matchrx                0= .
+x? z" abcd$"        z" aaaaabcdef" matchrx                0= .
+x? z" abcde$"       z" aaaaabcdef" matchrx                0= .
+x? z" abcdef$"      z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" abcde.$"      z" aaaaabcdef" matchrx z" abcdef"     z= .
+x? z" ^.*abcde.$"   z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
+x? z" ^a*abcde.$"   z" aaaaabcdef" matchrx z" aaaaabcdef" z= .
 
 
