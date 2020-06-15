@@ -240,18 +240,26 @@ linear interpolation
    y = y0 + (x-x0) * ------- = y0 + xm * ------- = y0 + xm * --
                      (x1-x0)               xd                xd
 
-in 16 fp operations
-could be optimized into assembly very easily
-====================================================================== }
-
-0 [if]
+simple, straightforward linear interpolation
 
 : interpolate ( -- )  f( y0 y1 x0 x1 x -- y )
    2-fpick f-  f-rot  fswap f- \ y0 y1 xm xd
    frot 3-fpick f-             \ y0 xm xd yd
    fswap f/ f* f+ ;
 
-[else]
+If the program interpolates several dependent variables against
+fixed independent variables, interpolants may be used. This amounts
+to refactoring the interpolation equation into
+
+   y = y0 * ( 1 - xi ) + y1 * xi      | code interpolant ( x0 x1 x -- xi )
+                                      |    st(2) fld       \ x0 x1 x  x0  
+         x - x0                       |    fsubp           \ x0 x1 xm     
+   xi = --------   and  xq = (1 - xi) |    st(2) fxch      \ xm x1 x0     
+        x1 - x0                       |    fsubp           \ xm xd        
+                                      |    fdivp                          
+   y = (y0 * xq) + (y1 * xi)          |    fnext                          
+
+====================================================================== }
 
 code interpolate ( -- )  f( y0 y1 x0 x1 x -- y )
                      \ y0 y1 x0 x1 x
@@ -267,89 +275,33 @@ code interpolate ( -- )  f( y0 y1 x0 x1 x -- y )
      faddp
      fnext
 
-[then]
+code interpolants ( x0 x1 x -- xi xq )
+   st(2) fld          \ x0 x1 x  x0    
+   fsubp              \ x0 x1 xm       
+   st(2) fxch         \ xm x1 x0       
+   fsubp              \ xm xd          
+   fdivp              \ xi             
+   fld1               \ xi 1.
+   st(1) fld          \ xi 1. xi
+   st(0) st(1) fsubp  \ xi xq
+   fnext              \
 
-\ ======================================================================
+{ ======================================================================
 
-false [if]
+Given that we have interpolants, we can save tremendous execution time
+if we keep the xi and xq terms on the fpstack instead of loading them
+for each operation. This poorly-named function does this; it interpolates
+between y0 and y1 using the ratios of xi and xq, returning y and
+preserving xi and xq for further use.
 
-cr .( y0y1 positive, x0x1 positive     )
-   1.0 2.0 0.2 0.5 0.20 interpolate f.
-   1.0 2.0 0.2 0.5 0.25 interpolate f.
-   1.0 2.0 0.2 0.5 0.30 interpolate f.
-   1.0 2.0 0.2 0.5 0.35 interpolate f.
-   1.0 2.0 0.2 0.5 0.40 interpolate f.
-   1.0 2.0 0.2 0.5 0.45 interpolate f.
-   1.0 2.0 0.2 0.5 0.50 interpolate f.
-cr .( y0y1 spans zero, x0x1 positive   )
-   -2.0 2.0 0.2 0.5 0.20 interpolate f.
-   -2.0 2.0 0.2 0.5 0.25 interpolate f.
-   -2.0 2.0 0.2 0.5 0.30 interpolate f.
-   -2.0 2.0 0.2 0.5 0.35 interpolate f.
-   -2.0 2.0 0.2 0.5 0.40 interpolate f.
-   -2.0 2.0 0.2 0.5 0.45 interpolate f.
-   -2.0 2.0 0.2 0.5 0.50 interpolate f.
-cr .( y0y1 negative, x0x1 positive     )
-   -2.0 -1.0 0.2 0.5 0.20 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.25 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.30 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.35 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.40 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.45 interpolate f.
-   -2.0 -1.0 0.2 0.5 0.50 interpolate f.
+====================================================================== }
 
-cr .( y0y1 positive, x0x1 spans zero   )
-   1.0 2.0 -0.2 0.5 -0.20 interpolate f.
-   1.0 2.0 -0.2 0.5 -0.25 interpolate f.
-   1.0 2.0 -0.2 0.5 0.30 interpolate f.
-   1.0 2.0 -0.2 0.5 0.35 interpolate f.
-   1.0 2.0 -0.2 0.5 0.40 interpolate f.
-   1.0 2.0 -0.2 0.5 0.45 interpolate f.
-   1.0 2.0 -0.2 0.5 0.50 interpolate f.
-cr .( y0y1 spans zero, x0x1 spans zero )
-   -2.0 2.0 -0.2 0.5 -0.20 interpolate f.
-   -2.0 2.0 -0.2 0.5 -0.25 interpolate f.
-   -2.0 2.0 -0.2 0.5 0.30 interpolate f.
-   -2.0 2.0 -0.2 0.5 0.35 interpolate f.
-   -2.0 2.0 -0.2 0.5 0.40 interpolate f.
-   -2.0 2.0 -0.2 0.5 0.45 interpolate f.
-   -2.0 2.0 -0.2 0.5 0.50 interpolate f.
-cr .( y0y1 negative, x0x1 negative     )
-   -2.0 -1.0 -0.2 0.5 -0.20 interpolate f.
-   -2.0 -1.0 -0.2 0.5 -0.25 interpolate f.
-   -2.0 -1.0 -0.2 0.5 0.30 interpolate f.
-   -2.0 -1.0 -0.2 0.5 0.35 interpolate f.
-   -2.0 -1.0 -0.2 0.5 0.40 interpolate f.
-   -2.0 -1.0 -0.2 0.5 0.45 interpolate f.
-   -2.0 -1.0 -0.2 0.5 0.50 interpolate f.
-
-cr .( y0y1 positive, x0x1 negative     )
-   1.0 2.0 -0.5 -0.2 -0.20 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.25 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.30 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.35 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.40 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.45 interpolate f.
-   1.0 2.0 -0.5 -0.2 -0.50 interpolate f.
-cr .( y0y1 spans zero, x0x1 spans zero )
-   -2.0 2.0 -0.5 -0.2 -0.20 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.25 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.30 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.35 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.40 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.45 interpolate f.
-   -2.0 2.0 -0.5 -0.2 -0.50 interpolate f.
-cr .( y0y1 negative, x0x1 negative     )
-   -2.0 -1.0 -0.5 -0.2 -0.20 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.25 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.30 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.35 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.40 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.45 interpolate f.
-   -2.0 -1.0 -0.5 -0.2 -0.50 interpolate f.
-
-
-[then]
+code polate ( xi xq y0 y1 -- xi xq y )
+   st(3) st(0) fmul    \ xi xq y0 Y1 
+   st(1) fxch          \ xi xq Y1 y0 
+   st(2) st(0) fmul    \ xi xq Y1 Y0
+   faddp               \ xi xq Y
+   fnext
 
 { ======================================================================
 FNEXT nominally ends a floating point code word; early exit

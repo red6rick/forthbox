@@ -110,7 +110,7 @@ PUBLIC
    'member 0= ior_oop_notmember ?throw  this find-executable-member
    state @ if postpone literal then ;  immediate
 
-: [method] ( -- xt )
+: [method] ( -- xt )   \   [method] class method --> xt 
    bl word count find-class  dup 0= ior_oop_notaclass ?throw
    'member 0= ior_oop_notmember ?throw  swap  find-member
    state @ if postpone literal then ;  immediate
@@ -225,7 +225,7 @@ and use it when rewrite-tib is called. to rewrite, we need what?
 
 if we just let a word parse whatever it wants, then call rewrite-tib
 starting with its input and appending the rest of the original tib
-
+`
 ---------------------------------------------------------------------- }
 
 1024 cell+ buffer: rewrite-buffer
