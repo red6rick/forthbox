@@ -555,4 +555,78 @@ ICODE 2@+ ( a-addr -- a+8 x1 x2 )
 
 : .[   [char] ] echo-until ; immediate
 
+{ ----------------------------------------------------------------------
+   EOL-SCANNER2 ( addr len -- got skip )
+   Take a line of text, look for an eol sequence. Return the length
+   of the line and how far ahead to skip in the line. Eol sequences
+   are: <cr> <lf> and <cr><lf>. If no eol sequence is found, return
+   the total length for both got and skip.
+
+   Implemented in code to scan for both cr and lf simultaneously; the
+   original scanned for a cr before evaluating a potential lf. Our
+   TLG files are all lf terminated; parsing them with the original
+   EOL-SCANNER took 3 minutes; this one takes 55 usec. :-)
+
+   NO-COMMAS ( addr len -- addr len )
+   Replace each comma in the string with a space. In place, modifies
+   the original string.
+
+   NEXT-WORD ( haystack len -- HAYSTACK LEN addr len )
+   Parse the next blank delimited word from the haystack and return
+   an updated haystack and the word found.
+
+   NEXT-LINE ( haystack len -- HAYSTACK LEN line len )
+   Parse a line from the haystack; update the address and length
+   of the remaining haystack.
+---------------------------------------------------------------------- }
+
+code eol-scanner2 ( addr n -- len #adv )
+   ebx ebx test  0= if                \ no string
+      0 # 0 [ebp] mov  ret            \ bail early
+   then                               \
+   0 [ebp] edx mov  ebx ecx mov       \ edi=addr ecx=n
+   13 # al mov  10 # ah mov           \ delimiters in al and ah
+   begin                              \
+      0 [edx] bl mov                  \ get char and increment
+
+      bl al cmp 0= if                 \ found cr
+         1 # ecx cmp 0<> if           \ if not at end
+            1 # ebx mov               \ for cr
+            1 [edx] ah cmp  0= if     \ if next is lf
+               ebx inc                \ len+2 for crlf
+            then                      \
+         then                         \
+         0 [ebp] edx sub              \ len of string
+         edx 0 [ebp] mov              \ for return, actual len
+         edx ebx add                  \ len+1 for just cr
+
+         ret
+      then
+
+      bl ah cmp 0= if                 \ found lf
+         0 [ebp] edx sub              \ len of string
+         edx 0 [ebp] mov              \ for return, actual len
+         1 [edx] ebx lea              \ len+1 for just lf
+         ret
+      then
+      edx inc
+   loop                               \
+   0 [ebp] edx sub                    \ len of string
+   edx 0 [ebp] mov                    \ for return,
+   edx ebx mov                        \
+   ret end-code                       \
+
+\ ----------------------------------------------------------------------
+
+: get-next-word ( haystack len -- HAYSTACK LEN word len )
+   bl skip  2dup  bl scan  2swap third - 0 max ;
+
+: get-next-line ( haystack len -- HAYSTACK LEN line len )
+   2dup eol-scanner2    \ addr len got #advance
+   fourth rot 2>r /string 2r>  ;
+
+: this-line ( haystack len -- line len )   get-next-line 2nip ;
+
+: trim ( addr len -- ADDR LEN )   -trailing  bl skip ;
+
 

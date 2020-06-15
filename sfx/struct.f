@@ -20,14 +20,6 @@ get-current ( *) cc-words set-current
 
    : end-struct ( -- )   0 [ oop +order ] RE-OPEN  -CC [ oop -order ] ;
 
-   \ a few named size references, to parallel use in gl.f
-
-   : hvar:   cell 2/ [ cc-words +order ] buffer: [ cc-words -order ] ;
-   : cvar:   1 chars [ cc-words +order ] buffer: [ cc-words -order ] ;
-   : var:       cell [ cc-words +order ] buffer: [ cc-words -order ] ;
-
-   : fsvar:  1 sfloats [ cc-words +order ] buffer: [ cc-words -order ] ;  \ 32 bits
-   
 ( *) set-current
 
 \ ========== a data structure definition is just a class ===============

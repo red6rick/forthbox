@@ -51,6 +51,92 @@ DEFER MATCHHERE
       COUNT 0=                                  \ one char at a time until
    UNTIL 2DROP 0 ;                              \ the text string is exhausted
 
+
+{ ======================================================================
+pattern matching on file images
+====================================================================== }
+
+\ ----------------------------------------------------------------------
+\ hunt for a line containing the needle.
+\ returns addr:len of haystack after the line that matched
+\ and the line:len of line that matched
+\ searches one line at a time, so matchrx can work magic
+\ the haystack does not need null termination, since we pick
+\ out a line at a time
+\
+\ NOTE THAT BECAUSE GET-NEXT-LINE TRIMS LEADING AND TRAILING
+\ BLANKS, THE RX FOR HUNT AND FINDRX CANNOT SEARCH FOR LINES
+\ THAT BEGIN OR END WITH SPACES. NOT IMPORTANT FOR THIS
+\ APPLICATION, BUT GENERALLY SHOULD NOT BE USED
+
+: hunt ( haystack len needle len -- HAYSTACK LEN matchline len )
+   r-buf  r@ zplace  begin
+      dup 0> while
+      get-next-line 2dup pad zplace
+      r@ pad matchrx if
+         r> drop exit
+      then 2drop
+   repeat r> drop 2dup ;
+
+: -hunt ( haystack len needle len -- HAYSTACK LEN matchline len )
+   r-buf  r@ zplace  begin
+      dup 0> while
+      get-next-line 2dup pad zplace
+      r@ pad matchrx 0= if
+         r> drop exit
+      then 2drop
+   repeat r> drop 2dup ;
+
+\ findrx looks for a needle in a haystack, returning the
+\ location of the match found...
+
+: findrx ( haystack len needle len -- HAYSTACK LEN )
+   2over 2swap hunt drop nip nip third - /string ;
+
+: -findrx ( haystack len needle len -- HAYSTACK LEN )
+   2over 2swap -hunt drop nip nip third - /string ;
+
+: find-line ( haystack len pattern len -- line len )
+   findrx this-line ;
+
+: find-tag ( haystack len pattern len -- line len )
+   find-line  get-next-word 2drop  trim ;
+
+: split-string ( haystack len pattern len -- HAYSTACK LEN haystack LEN2 )
+   fourth >r  findrx  get-next-line  2drop  r> third over - ;
+
+{ ======================================================================
+given a line of text with arbitrary spacing, repack into a string
+at the destination with single spaces between the words. return
+the number of words on the line
+====================================================================== }
+
+: pack ( addr len dest -- n )
+   0 over c!  0 >r begin
+      >r get-next-word dup 0> while
+      r@ c@ if s"  " r@ append then  r@ append  r>
+   r++  repeat 2drop 2drop  r> drop r> ;
+
+{ ======================================================================
+in a text buffer, skip any blank lines and return the remainder of
+the buffer
+====================================================================== }
+
+: skip-blank-lines ( addr len -- addr len )
+   begin
+      dup 0> while
+      2dup get-next-line trim nip if 2drop exit  then
+      2nip
+   repeat ;
+
+{ ======================================================================
+count the lines in a buffer
+====================================================================== }
+
+: #lines ( addr len -- n )
+   0 >r begin dup 0> while r++ get-next-line 2drop repeat 2drop r> ;
+
+
 \ ----------------------------------------------------------------------
 \\ \\\\ a little testing never hurt!
 \\\ \\\ 

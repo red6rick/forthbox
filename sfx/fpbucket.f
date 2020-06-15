@@ -1,3 +1,16 @@
+{ ======================================================================
+a few specific code optimizations for interpolate
+====================================================================== }
+
+code 3-fpick ( -- )   f( r0 r1 r2 r3 -- r0 r1 r2 r3 r0 )
+   4 >fs   ST(3) FLD   5 fs>   FNEXT
+
+code 2-fpick ( -- )   f( r0 r1 r2 -- r0 r1 r2 r0 )
+   3 >fs   ST(2) FLD   4 fs>   FNEXT
+
+CODE F-ROT ( -- ) ( r r r -- r r r )
+   3 >fs   ST(2) FXCH   ST(1) FXCH  3 fs>   FNEXT
+
 
 { ======================================================================
 The current swiftforth doesn't manage fp state very well.
@@ -49,3 +62,35 @@ code xf@ 0 ( a -- ) f( -- rval )
       then
    1- repeat drop  r> set-fpstate ;
    
+\ ========== add constants to the object structure =====================
+
+supreme reopen
+
+: fsvec ( n -- )   ( n) 0 do  0.0 sf,  loop ;
+
+: fsvar   create   1 fsvec ;
+
+: fsvec3:  create   3 fsvec ;
+: fsvec4:  create   4 fsvec ;
+
+
+end-class   supreme relink-children
+
+\ ----------------------------------------------------------------------
+{ ----------------------------------------------------------------------
+1/F   ( -- )   f( r -- 1/r )    return the inverse of r
+
+F@+ ( addr -- addr+8 ) f( -- r )   read data from the address,
+   leave an incremented address on the stack
+
+FXCHG ( addr addr -- )   swap the contents of the two float variables
+
+---------------------------------------------------------------------- }
+
+
+: fxchg ( addr addr -- )
+   dup f@  over f@  f! f! ;
+
+: 1/f ( -- ) f( f1 -- 1/f1 )   1.0 fswap f/ ;
+
+: f@+ ( addr -- addr+8 ) f( -- data )   dup f@  1 floats + ;
