@@ -4,6 +4,115 @@
   Extensions to the standard FPMATH package in SwiftForth.
 ====================================================================== }
 
+
+-? icode fnegate fchs ret end-code
+-? icode f+ faddp ret end-code
+-? icode f- fsubp ret end-code
+-? icode f* fmulp ret end-code
+-? icode f/ fdivp ret end-code
+
+-? icode fswap st(1) fxch               ret end-code 
+-? icode fdup  st(0) fld                ret end-code
+-? icode f2dup st(1) fld  st(1) fld     ret end-code
+-? icode fover st(1) fld                ret end-code
+-? icode fdrop st(0) fstp               ret end-code
+-? icode frot  st(1) fxch   st(2) fxch  ret end-code
+
+-? icode #0.0e  fldz   ret end-code
+-? icode #1.0e  fld1   ret end-code
+-? icode pi     fldpi  ret end-code
+-? icode ln2    fldln2 ret end-code
+
+-? icode f!   0 [ebx] qword fstp   0 [ebp] ebx mov  4 # ebp add  ret end-code
+-? icode f@   0 [ebx] qword fld    0 [ebp] ebx mov  4 # ebp add  ret end-code
+
+-? icode f+!  0 [ebx] qword fadd  0 [ebx] qword fstp
+          0 [ebp] ebx mov  4 # ebp add  ret end-code
+
+-? icode fcos fcos ret end-code
+-? icode fsin fsin ret end-code
+
+CODE (FCONSTANT)
+   EAX POP  0 [EAX] QWORD FLD
+   RET END-CODE
+
+code (FINDIRECT)
+   eax pop  0 [eax] eax mov  0 [eax] qword fld  ret end-code
+
+-? : FCONSTANT  HEADER POSTPONE (FCONSTANT) F, ;
+
+: indirect-fvalue
+   header  postpone (findirect) , ;
+
+\ ----------------------------------------------------------------------
+
+OPTIMIZING-COMPILER +ORDER
+
+[+SWITCH SAFE
+   ' (FVALUE) RUN: ['] (FVALUE) ;
+   ' (FCONSTANT) RUN: ['] (FCONSTANT) ;
+   ' (FINDIRECT) RUN: ['] (FINDIRECT) ;
+SWITCH]
+
+: FVAR-@ [+ASM]
+   LASTCHILD CELL+ @ [EDI] QWORD FLD
+   [-ASM] ;
+
+OPTIMIZE ANY (FVALUE) WITH FVAR-@
+
+: LIT->BODYF! ( -- )   [+ASM]
+   LASTLIT @ 5 + [EDI] QWORD FSTP
+   [-ASM] ;
+
+OPTIMIZE (LITERAL) >BODYF! WITH LIT->BODYF!
+
+OPTIMIZE NEW-VAR F@ WITH FVAR-@
+
+: FVAR-@-F+ ( -- )   [+ASM]  LASTCHILD CELL+ @ [EDI] QWORD FADD   [-ASM] ;
+: FVAR-@-F* ( -- )   [+ASM]  LASTCHILD CELL+ @ [EDI] QWORD FMUL   [-ASM] ;
+: FVAR-@-F/ ( -- )   [+ASM]  LASTCHILD CELL+ @ [EDI] QWORD FDIV   [-ASM] ;
+: FVAR-@-F- ( -- )   [+ASM]  LASTCHILD CELL+ @ [EDI] QWORD FSUB   [-ASM] ;
+   
+
+OPTIMIZE FVAR-@ F+ WITH FVAR-@-F+
+OPTIMIZE FVAR-@ F* WITH FVAR-@-F*
+OPTIMIZE FVAR-@ F- WITH FVAR-@-F- 
+OPTIMIZE FVAR-@ F/ WITH FVAR-@-F/
+
+
+{ ----------------------------------------------------------------------
+: FCONST->LITERAL ( -- )
+   LASTLIT @ LASTCHILD @ >BODY @ LASTLIT 2!
+   ['] (LITERAL) XTHIST ! ;
+
+not what's wanted; the literal isnt correct it is not a float!
+---------------------------------------------------------------------- }
+
+: NEW-FCONST ( -- )   [+ASM]
+   LASTCHILD @ 5 + [EDI] QWORD FLD
+   [-ASM] ;
+
+OPTIMIZE ANY (fCONSTANT) WITH NEW-fCONST
+
+optimizing-compiler +order
+
+: new-findirect [+asm]
+   lastchild @ >body @ origin - [edi] qword fld
+   [-asm] ;
+
+optimize any (findirect) with new-findirect
+
+: findirect-plus [+asm]
+   lastchild @ >body @ origin - [edi] qword fadd
+   [-asm] ;
+
+optimize new-findirect f+ with findirect-plus
+
+
+PREVIOUS
+
+
+
 { ========== simplified float numeric input ============================
   SwiftForth uses strict floating point numeric input by default. This
   means numbers are required to end with an exponent indication.
@@ -94,10 +203,14 @@ icode fr>
    1 floats # esp add
    f> fnext
 
-icode fr@n ( n -- )
+icode fr!n ( n -- ) f( r -- )
+   0 [esp] [ebx*8] qword fstp
+   pop(ebx) ret end-code
+
+icode fr@n ( n -- ) f( -- r )
    0 [esp] [ebx*8] qword fld
-   pop(ebx)
-   f> fnext
+   pop(ebx)  ret end-code
+
 
 { ========== dot-s replacement =========================================
   The built-in .s can't print but 5 floats; we make it possible to
@@ -282,33 +395,15 @@ FORTH
 
 { ======================================================================
 create a self-fetching fvalue (which isn't eligible for "to" operators)
-====================================================================== }
-
 \ support; optimization possible here
 
 : indirect-fvalue ( addr <name> -- )   \ run: f( -- rval )
    create , does> @ f@ ;
 
-{ ======================================================================
-redefine fvariable here so we can dereference it by its code pointer.
-the definition of (fcreate) is exactly the same as (create) but has
-a unique address
 ====================================================================== }
 
-CODE (DFCREATE)
-   PUSH(EBX)                        \ push old tos
-   EBX POP                          \ new tos from return stack
-   RET   END-CODE
 
-CODE (SFCREATE)
-   PUSH(EBX)                        \ push old tos
-   EBX POP                          \ new tos from return stack
-   RET   END-CODE
 
--? : SFVARIABLE   HEADER  POSTPONE (SFCREATE)  #0.0E SF, ;   \ Usage: SFVARIABLE <name>
--? : DFVARIABLE   HEADER  POSTPONE (DFCREATE)  #0.0E DF, ;   \ Usage: DFVARIABLE <name>
-
--? AKA DFVARIABLE FVARIABLE
 
 { ======================================================================
 function for fvalues NOT defined in fpmath.f
